@@ -1,0 +1,1057 @@
+---
+title: "DTSC-550: Getting Started with R"
+output: pdf
+---
+
+# VIDEO: Before we get started in R & RStudio
+
+Before you can get started, do these:
+
+1.  Install R on your computer
+
+2.  Install RStudio on your computer
+
+This [link](https://posit.co/download/rstudio-desktop/) provides an option to download both R and R Studio.
+
+3.  Download this `.rmd` file from Brightspace (use "Files" to open it)
+
+4.  Access the "Learning Statistics with R" [textbook](https://learningstatisticswithr.com/lsr-0.6.pdf) for additional help.
+
+Much of the following comes from [the textbook](https://learningstatisticswithr.com/book/introR.html)
+
+5.  Know the difference between R and R Studio
+
+6.  Things to know about R Studio
+
+-   Source pane
+
+-   Console
+
+-   Environment pane
+
+-   Plot/output pane
+
+-   Insert chunk; run chunk
+
+```{r}
+
+# to run on a Mac: command + return
+
+```
+
+```{r}
+# On a Mac: option + command + i gives a new code chunk
+
+# On a PC: control + alt + i 
+```
+
+-   Source vs. Visual
+
+-   `#` inside block is a comment; `#` outside a block creates the outline
+
+-   Outline
+
+7.  Under "Help", see "Cheatsheets"
+
+------------------------------------------------------------------------
+
+# VIDEO: Using R as a Calculator
+
+Typing commands at the R Console vs. in a code block
+
+```{r}
+1+10
+```
+
+# You don't need the initial `>` sign
+
+```{r}
+# comment: this will yield an error message!
+ 10 + 20
+```
+
+
+```{r}
+1+1
+```
+
+How did I make this "code chunk"?
+
+# Be very careful to avoid typos
+
+## Typo: You meant `+` but typed `=`
+
+```{r}
+# This will yield an error!
+10 = 20
+
+```
+
+## Typo: You meant `20 - 10`
+
+```{r}
+10 - 20
+```
+
+# R is flexible with spacing, but use common practice!
+
+Especially on CodeGrade assignments and the "structure tests"
+
+## Example
+
+```{r}
+# Don't do this
+10        + 20
+
+# Don't do this either
+10+20
+
+# Recommended
+10 + 20
+```
+
+## Another example with spaces
+
+```{r}
+citation()
+```
+
+```{r}
+### This works, but not recommended
+citation (  )
+```
+
+```{r}
+### This doesn't work!
+### Notice the red X to the left
+cit ation()
+```
+
+# R can sometimes tell that you're finished (but not often)
+
+```{r}
+10 +
+```
+
+```{r}
+10 + (3 * 4
+
+### Some calculators are ok with this...not R!
+```
+
+# Math Operations
+
+```{r}
+### note the recommended spacing
+
+10 + 2 
+10 - 2
+10 * 2
+10 / 2
+10 ^ 2
+
+# What's with the [1]?
+```
+
+# Order of Operations: PEMDAS (or BEMDAS)
+
+```{r}
+(1 + 2) * 3
+
+#[1 + 2] * 3
+
+1 + 2 * 3
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: The Assignment Operator in R
+
+## Storing a number as a variable
+
+`<-` is the assignment operator in R.
+
+You could use `=`, but it's not common practice.
+
+```{r}
+sales <- 350
+
+#sales = 350
+
+### Note environment pane!
+
+sales
+print(sales)
+```
+
+Just because you store a number into a variable doesn't mean you can see it immediately. You still need to `print()` or display it.
+
+## Don't assign values like this!
+
+```{r}
+### These work but aren't common practice
+sales<-350
+
+350 -> sales
+
+sales = 350
+
+### This doesn't work
+sales < - 350
+```
+
+## Doing calculations with variables
+
+```{r}
+sales <- 350
+royalty <- 7
+
+350*7
+
+sales * royalty
+```
+
+```{r}
+revenue <- sales * royalty
+revenue
+
+### Note the spacing
+```
+
+## Using `()` to print
+
+-   This isn't common practice
+
+-   Avoid this on assignments!
+
+```{r}
+(sales * royalty)
+```
+
+## Overwrite old value with new value
+
+Be careful when you do this, especially when you're working with large files...you don't want to accidentally overwrite your work.
+
+Note DTSC-580 (Data Manipulation) course
+
+```{r}
+revenue <- revenue + 550
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Rules for naming variables in R
+
+-   "Run all chunks above" option (in 2 places)
+
+## 1. You can use uppercase A-Z, lowercase a-z, numbers 0-9 and punctuation `.` and `_` in the variable name.
+
+```{r}
+### We don't recommend this!
+SaL.e_s <- 100
+```
+
+```{r}
+Sales? <- 100
+```
+
+## 2. Variable names cannot include spaces...consider using a `.` instead
+
+```{r}
+sa les <- 100
+```
+
+```{r}
+my.sales <- 100
+```
+
+## 3. Variable names must start with a letter or a period, not an underscore or a number. Convention: don't start with a period, even though it's allowed.
+
+```{r}
+sales <- 100
+
+Sales <- 101
+
+.sales <- 50 ### not recommended
+
+```
+
+```{r}
+# error!
+_sales <- 100
+```
+
+```{r}
+# error!
+1718sales <- 2000
+```
+
+```{r}
+sales1718 <- 2000
+```
+
+### Errors
+
+```{r}
+# Error!
+_sales <- 50
+1sales <- 50
+```
+
+## 4. Variable names cannot be one of the reserved keywords, such as `if`, `else`, `repeat`, `while`, `function`, `for`, `in`, `next`, `break`, `TRUE`, `FALSE`, `NULL`, `Inf`, `NaN`, `NA`, etc.
+
+```{r}
+# error!
+break <- 999
+```
+
+You don't need to memorize these! You'll know it when you break it.
+
+## Conventions for Naming Variables
+
+### 1. Use informative variable names
+
+Good: sales & revenue
+
+Bad: var1, var2, df1, df2
+
+### 2. Use short names
+
+```{r}
+sales.for.this.book.that.you.are.reading <- 1000000
+
+#sales.for.this.book.that.you.are.reading
+```
+
+-   Typing is a pain
+-   Reading is a pain
+-   Tension between informative & concise
+
+### 3. Be consistent with your variable naming style
+
+-   `my.new.salary` (aka dot case or period.separated)
+
+-   `my_new_salary` (aka snake case)
+
+-   `myNewSalary` (aka camel case)
+
+-   `my-new-salary` (aka kebab case...not allowed in R)
+
+-   `MyNewSalary` (aka Pascal case)
+
+-   Check with your organization if they have a style preference
+
+-   Different coding languages have different style recommendations/requirements
+
+### 4. For CodeGrade assignments, use the names we ask you to use
+
+-   We typically have you use Q1, Q2, Q3, etc. for your variable (object) names
+
+------------------------------------------------------------------------
+
+# VIDEO: More Math Operations in R
+
+## Math Operations
+
+```{r}
+### Square Root
+225 ^ 0.5
+
+sqrt(225)
+
+### Absolute Value
+abs(21)
+
+abs(-21)
+
+### Multiple Functions
+sqrt(1 + abs(-8))
+```
+
+### R works with Real Numbers only...
+
+```{r}
+sqrt(-9) # NaN = not a (real) number
+```
+
+### ...but Complex numbers are possible
+
+But we won't be using these in this course (or this program)!
+
+```{r}
+sqrt(-9+0i)
+```
+
+## Function arguments, their names and their defaults
+
+```{r}
+round(3.1415)
+
+round(3.14165, 2)
+
+round(x = 3.1415, digits = 2)
+
+### Don't do this, even though it works
+### We only use <- to create new variables
+round(x <- 3.1415, digits <- 3)
+
+### Again, don't use <- like this!
+
+```
+
+```{r}
+round(3.14165, 2)
+
+### The order of the arguments matter!
+round(2, 3.14165)
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Autocomplete, Tab Completion, History
+
+## Autocomplete & Tab completion
+
+These work here in a notebook *and* in the console
+
+```{r}
+### With a built-in function, like round
+
+
+
+### With the functions arguments
+
+
+
+### With the name of a saved variable, like sales from earlier
+
+```
+
+## Browsing your command history
+
+1.  In console, hit up arrow
+2.  In R Studio, find "history" in the Environment pane (upper right)
+
+------------------------------------------------------------------------
+
+# VIDEO: Vectors and Operations
+
+## Storing many numbers as a vector
+
+Suppose the sales of a textbook were 0 books in January, 100 in February, 200 in March, 50 in April, and none the rest of the year.
+
+Use the "combine" function (or collection or concatenate):
+
+```{r}
+sales.by.month <- c(0, 100, 200, 50, 0, 0, 0, 0, 0, 0, 0, 0)
+
+sales.by.month
+
+### Adjust window to discuss indices 
+```
+
+## Getting information out of vectors
+
+```{r}
+sales.by.month[2]
+```
+
+Note that `[1] 100` is what prints, not `[2] 100`.
+
+```{r}
+feb.sales <- sales.by.month[2]
+```
+
+## Using `:` for a range of indices
+
+```{r}
+### Sales the last half of the year: July through Dec.
+sales.by.month[7:12]
+```
+
+## Altering the elements of a vector
+
+```{r}
+sales.by.month[5] <- 25
+
+sales.by.month
+```
+
+Python begins with 0 as its first index; R uses 1.
+
+Note the codeblock above overwrites the `sales.by.month` variable.
+
+## You can't index what doesn't exist
+
+```{r}
+sales.by.month[13]
+```
+
+## Other useful functions with vectors
+
+### length()
+
+```{r}
+length(sales.by.month)
+```
+
+### Vectorized operations
+
+```{r}
+sales.by.month * 7
+```
+
+```{r}
+days.per.month <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+
+profit <- sales.by.month * 7
+
+profit / days.per.month
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Storing Other Types of Data in R
+
+## Storing text data
+
+```{r}
+greeting <- 'hello'
+greeting
+
+greeting2 <- "hello"
+greeting2
+```
+
+```{r}
+months <- c("January", "Feb", "March", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec")
+
+months[12]
+
+months[c(2, 3, 4, 5)]
+
+months[2:5]
+```
+
+### length() vs. nchar()
+
+```{r}
+length(greeting)
+
+nchar(greeting)
+
+length(months)
+
+nchar(months)
+```
+
+## Storing "true or false" data
+
+```{r}
+2 + 2
+```
+
+```{r}
+2 + 2 == 4
+```
+
+```{r}
+2 + 2 == 5
+```
+
+```{r}
+2 + 2 = 4
+```
+
+## Logical operations
+
+```{r}
+3*3 + 4*4 == 5*5
+```
+
+```{r}
+sqrt(25) == 5
+```
+
+```{r}
+99 < 100
+```
+
+```{r}
+100 < 100
+```
+
+```{r}
+100 <= 100
+```
+
+```{r}
+25 != 30
+```
+
+## Vectors of Logicals
+
+```{r}
+x <- c(TRUE, TRUE, FALSE)
+
+length(x)
+
+sum(x)
+
+x == 1
+
+x == 0
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Indexing Vectors
+
+## How do we access our values stored in a vector?
+
+```{r}
+sales.by.month[c(2, 3, 4)]
+
+sales.by.month[2:4]
+
+```
+
+```{r}
+sales.by.month[4:2]
+
+sales.by.month[c(4, 3, 2)]
+```
+
+```{r}
+sales.by.month
+
+sales.by.month[c(2, 7, 12)]
+```
+
+## It's easy to forget the `c()`!
+
+```{r}
+sales.by.month[2, 7, 12]
+```
+
+## Logical indexing
+
+Which months had positive sales (i.e., more than \$0)?
+
+```{r}
+sales.by.month
+```
+
+Note: It may seem easy to do this by eye, but with millions of rows, we need something more efficient (and less error-prone) than our counting
+
+```{r}
+sales.by.month > 0
+```
+
+## The following is super important when indexing with logical operators!
+
+### Do we want the sales themselves?
+
+```{r}
+test <-sales.by.month[sales.by.month > 0]
+```
+
+### Or, do we want the months?
+
+```{r}
+months[sales.by.month > 0]
+```
+
+For the months that had positive sales, how much were those sales?
+
+```{r}
+sales.by.month[sales.by.month > 0]
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Global Options and Set Working Directory
+
+## Get working directory
+
+```{r}
+getwd()
+```
+
+## See the files in your working directory
+
+```{r}
+list.files()
+```
+
+## Set working directory
+
+```{r}
+setwd("/Users/home/Desktop")
+
+### Syntax differs between PC & MAC
+```
+
+## Global option to set working directory
+
+1.  Tools
+2.  Global Options
+3.  Under Basic tab, select "Browse" to set your default working directory
+
+See textbook discussion [here](https://learningstatisticswithr.com/book/mechanics.html#navigation)
+
+## How to quit R
+
+```{r}
+q()
+```
+
+Save: Do you want to save all the variables in the environment?
+
+------------------------------------------------------------------------
+
+# VIDEO: Using Comments
+
+`#` tells R to ignore everything else you've written on this line, after the `#`
+
+It's tempting to skip comments, especially when your code isn't that complicated.
+
+But, as your code gets more complicated, using comments is essential. Your teammates and your future self with thank you.
+
+```{r}
+seeker <- 3.1415           # create the first variable 5*5
+lover <- 2.7183            # create the second variable
+keeper <- seeker * lover   # now multiply them to create a third one
+print(keeper)              # print out the value of 'keeper'
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Packages
+
+A *package* is basically just a big collection of functions, data sets and other R objects that are all grouped together under a common name.
+
+Some packages are already installed when you put R on your computer, but the vast majority of R packages are out there on the internet, waiting for you to download, install and use them.
+
+These are called "libraries" in Python, such as NumPy, Pandas, Seaborn.
+
+------------------------------------------------------------------------
+
+There's a critical distinction that you need to understand: the difference between having a package installed on your computer, and having a package loaded in R.
+
+1.  A package must be *installed* before it can be loaded.
+
+2.  A package must be *loaded* before it can be used.
+
+Citation [here](https://learningstatisticswithr.com/book/mechanics.html#packageinstall)
+
+Light Bulb Analogy:
+
+-   Installing a package is like installing a light bulb
+
+-   Load a package is like turning on a light bulb
+
+------------------------------------------------------------------------
+
+Let's check out the packages panel to understand the difference between packages that are *installed* and ones that are *loaded*.
+
+## Either the package isn't installed or it isn't loaded...
+
+```{r}
+dplyr
+```
+
+## 1. How to install a package
+
+You only do this once.
+
+```{r}
+install.packages("dplyr")
+```
+
+## 2. How to load the package
+
+You do this each time you use want to use the package, typically at the beginning of your notebook.
+
+```{r}
+library(dplyr)
+```
+
+## Let's practice installing
+
+```{r}
+install.packages("psych")
+```
+
+## ...and let's practice loading
+
+```{r}
+library(psych)
+
+### Note the lack of quotes around psych
+```
+
+------------------------------------------------------------------------
+
+## Important Note about R Tools!
+
+RTools is a package to help build and develop packages, which we won't do in this course.
+
+If you are running Windows OS, you may see a message that says: *WARNING: Rtools is required to build R packages, but is not currently installed.* You can safely ignore this warning.
+
+------------------------------------------------------------------------
+
+## Update packages
+
+There's an `update.packages()` function but it's easier to use the packages panel and select "Update".
+
+The [LSR textbook](https://learningstatisticswithr.com/book/mechanics.html#what-packages-does-this-book-use) uses these packages:
+
+-   lsr
+
+-   psych
+
+-   car
+
+```{r}
+#install.packages(c('lsr', 'psych', 'car'))
+
+library(lsr)
+library(psych)
+library(car)
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Cleaning up your environment
+
+How do I clear my environment?
+
+## Use rm() for remove
+
+```{r}
+### Remove one object/variable
+rm(greeting)
+```
+
+```{r}
+### Remove all objects
+rm(list = ls())
+```
+
+## Use the broom buttons
+
+-   in the environment pane
+
+-   in the console
+
+------------------------------------------------------------------------
+
+# VIDEO: Intro to Data frames
+
+For more, see [textbook](https://learningstatisticswithr.com/book/mechanics.html#dataframes)
+
+## Example
+
+Suppose an experiment was conducted with three treatment groups and yielded the following data:
+
+```{r}
+# Treatment group
+group <- c(1, 1, 1, 2, 2, 2, 3, 3, 3)
+
+# Gender of participants
+gender <- c('male', 'male', 'male', 'male', 'male', 'female', 'female', 'female', 'female')
+
+# Ages of participants
+age <- c(17, 19, 21, 37, 18, 19, 47, 18, 19)
+
+# Scores on a test
+score <- c(12, 10, 11, 15, 16, 14, 25, 21, 29)
+```
+
+All four of these variables correspond to the same data set, and all four of them are organised in exactly the same way...but R doesn't know this!
+
+In other words, when we store everything in separate variables like this, R doesn’t know anything about the relationships between things. It doesn’t even really know that these variables actually refer to a proper data set.
+
+The data frame fixes this: if we store our variables inside a data frame, we’re telling R to treat these variables as a single, fairly coherent data set.
+
+## Create data frame
+
+```{r}
+expt <- data.frame(age, gender, group, score) 
+expt 
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Pulling out contents from a data frame
+
+We use a `$` to access a column in a data frame.
+
+Notice this returns an unnamed vector.
+
+```{r}
+expt$score
+```
+
+We can also use `[]` to access the 1st, 2nd, 3rd, etc. column from a data frame.
+
+Notice that this returns a *data frame*.
+
+```{r}
+expt[1]
+
+```
+
+## Check the class of the output
+
+```{r}
+class(expt[1])
+```
+
+## Access a row in the data frame
+
+```{r}
+### View the first row
+expt[1, ]
+```
+
+```{r}
+### View the third to the seventh rows
+expt[3:7, ]
+```
+
+```{r}
+### View the third to the seventh rows, but only the third and fourth columns
+expt[3:7, 3:4]
+```
+
+```{r}
+### View the third to the seventh rows, but only the third and fourth columns
+expt[3:7, c('score', 'age')]
+```
+
+In future courses, we will use special packages to pull out data from data frames. In this course, we'll stick with base-R functionality.
+
+------------------------------------------------------------------------
+
+# VIDEO: Investigating a Data Frame
+
+## How big is the data frame?
+
+```{r}
+dim(expt)
+
+# nrow(expt)
+
+# ncol(expt)
+```
+
+```{r}
+nrow(expt)
+```
+
+## Identify the names of the data frame
+
+```{r}
+# Option 1
+names(expt)
+
+# Option 2
+colnames(expt)
+```
+
+## View the structure of a data frame
+
+```{r}
+str(expt)
+
+### For CodeGrade Assignments
+ls.str(expt)
+```
+
+-   Note the dimensions
+
+-   Note the `$` by each name.
+
+-   Note the data types (R's best guess)
+
+## Find summary statistics
+
+```{r}
+summary(expt)
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Accessing a CSV File
+
+-   Data frames are often stored in CSV files (comma separated values file)
+
+-   How do we load a CSV into R so we can analyze the data frame?
+
+Let's practice:
+
+1.  Download the 'donors.csv' from Brightspace.
+
+2.  Store the file in the folder as this "Getting Started with R.Rmd" Notebook (in your working directory)
+
+## One Way: Navigate "files" pane
+
+Navigate to the folder where the file is.
+
+Select "Import Dataset..."
+
+```{r}
+donors
+```
+
+## Just be sure to save the dataframe with the name that the assignment says to use.
+
+Suppose an assignment says to call this dataset `donors_2023`:
+
+```{r}
+donors_2023 <- donors
+```
+
+## A Different Way: Use read.csv()
+
+-   This is the way you'll use on assignments
+
+### What is my working directory?
+
+```{r}
+getwd()
+```
+
+### Set my working directory
+
+```{r}
+setwd("/Users/choughton/Desktop/Eastern/DS550/")
+```
+
+## Is the donors.csv file present?
+
+```{r}
+list.files()
+```
+
+If you don't see the file you need for the assignment, you have to set your working directory (or save the file in the current working directory)
+
+-   Recall an earlier video about setting your default working directory (Go to Tools, then Global Options)
+
+## read.csv()
+
+This approach is what you will use for some assignments in this course.
+
+```{r}
+donors_2023 <- read.csv("donors.csv")
+
+# Only works if the CSV file is in your working directory
+# Spelling matters
+# Quotes matter
+# The .csv matters
+# Don't open the file in Excel or Numbers
+```
+
+Figure out how to do this sooner than rather later!
