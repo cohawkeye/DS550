@@ -1,0 +1,213 @@
+---
+title: "ANOVA, Multiple Comparisons, Post Hoc Tests"
+output: html_notebook
+---
+
+# The Problem with Multiple Comparisons
+
+When doing multiple tests (aka multiple comparisons), our chances of making a Type I error increases.
+
+*Type I error* is a "false positive" - we believe the means are different, but they actually are not different.
+
+-   Plan 1 vs plan 2: α = 5%
+-   Plan 1 vs plan 3: α = 5%
+-   Plan 2 vs. plan 3: α = 5%
+
+The *family-wise error rate* formula is $$1 - (1 - α)^C$$ where *alpha* is your significance level for a single test, and *C* is the number of tests.
+
+$$1 - (1 - 0.05) ^ 3 = 0.142625$$
+
+With family-wise α = 0.143, it's much easier to find evidence of a difference in means!
+
+In other words, there's a 14% chance we'll get a false positive (a Type I error)
+
+This is why we use ANOVA to compare all the means all at once!
+
+Null Hypothesis ($H_{0}$):
+
+-   $\mu_{1} = \mu_{2} = \mu_{3} = ... = \mu_{k}$
+
+Alternative Hypothesis ($H_{a}$):
+
+-   The $\mu's$ are not all equal.
+
+-   At least one pair of means are different.
+
+------------------------------------------------------------------------
+
+# Inputting our data
+
+We need to tell R our weight loss data along with which group (treatment) each subject received.
+
+```{r}
+
+group <- c(1, 1, 1, 1, 2, 2, 2, 3, 3, 3)
+group <- as.factor(group)
+
+weightloss <- c(7, 9, 5, 7, 9, 11, 7, 15, 12, 18)
+
+```
+
+# Option 1 for ANOVA
+
+```{r}
+summary(aov(weightloss ~ group))
+```
+
+# Option 2 for ANOVA
+
+```{r}
+anova(lm(weightloss ~ group))
+```
+
+------------------------------------------------------------------------
+
+# Calculate p-value for F-test
+
+```{r}
+pf(11.735, 
+   df1 = 2, #df(groups) or #df(numerator)
+   df2 = 7, #df(error) or #df(denominator)
+   lower.tail = FALSE
+   )
+
+# 0.0058 * 100 = 0.58%
+```
+
+# Plot F distribution
+
+```{r}
+# Plot an F distribution with 2 df in numerator and 7 df in denominator
+# Use x-axis scale from 0 to 12
+# "df" is not dataframe! It is a function that gives the "density of f distribution"
+curve(df(x, 
+         df1=2, 
+         df2=7
+         ), 
+      from=0, 
+      to=12,
+      xlab = 'F',
+      ylab = ''
+)
+
+# Put a red line at the F statistic 
+# The p-value is area under curve to the right of red line
+abline(v = 11.735, col='red')
+
+# Recall critical F = 4.74
+# 11.735 > 4.74 so we reject null
+```
+
+------------------------------------------------------------------------
+
+# Post Hoc Tests
+
+If we find evidence that at least two of the group means are different, we'd like to know which pairs are different.
+
+ANOVA tells us *if* there are differences among the means, but not which pair or pairs are significantly different. To find that out, we need to do a *Post-Hoc test*.
+
+Post Hoc Tests
+
+1.  Bonferroni Correction
+
+-   adjust for multiple comparisons by making a more strict alpha level
+-   can be used for any test, not just ANOVA
+
+2.  Tukey's Honestly Significant Difference (HSD) test
+
+-   do pairwise comparisons
+-   more powerful with large number of comparisons
+-   more common/preferred
+
+3.  Scheffe's test
+
+-   See example [here](https://www.statisticshowto.com/scheffe-test/)
+
+4.  Fisher's Least-Significant Difference (LSD) test
+
+-   See example [here](https://www.statisticshowto.com/how-to-calculate-the-least-significant-difference-lsd/)
+
+For more details on post hoc tests, see [here](https://statisticsbyjim.com/anova/post-hoc-tests-anova/)
+
+For a list of a bunch of post hoc tests, see [here](https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/post-hoc/)
+
+------------------------------------------------------------------------
+
+## Tukey's HSD test
+
+A common way to determine which pairs are really, honestly different is to use *Tukey's HSD test*, HSD standing for "Honestly Significant Difference."
+
+### Run ANOVA and perform TukeyHSD
+
+```{r}
+
+# Fix our data frame so the Tukey test accepts it
+### The order of the columns matters: response variable must be first!
+resultsDF <- data.frame(weightloss, group) 
+
+# Store ANOVA results
+resultsDFaov <- aov(lm(resultsDF))
+
+# Perform test and store results so we can graph later
+# TukeyHSD is in base R (no special package needed)
+tukeytest <- TukeyHSD(resultsDFaov)
+
+tukeytest
+
+### The TukeyHSD uses an adjusted standard error formula unlike our typical two-sample t-interval
+
+```
+
+### Visualize Confidence Intervals from Tukey HSD
+
+```{r}
+plot(tukeytest)
+```
+
+For another TukeyHSD example, see [here](https://www.r-bloggers.com/2018/09/tukeys-test-for-post-hoc-analysis/)
+
+------------------------------------------------------------------------
+
+## Bonferroni Correction
+
+When doing multiple tests, our chances of type I error increase. How can we address this?
+
+To find your adjusted significance level, divide the significance level (α) for a single test by the number of tests (n).
+
+To calculate the number of tests, we use (k)(k-1) / 2, where k is the number of groups.
+
+With three treatment groups, we have (3 \* 2) / 2 = 3 tests
+
+Note: With 4 groups we would have (4 \* 3) / 2 = 6 tests (we would be comparing 1v2, 1v3, 1v4, 2v3, 2v4, 3v4)
+
+Bonferroni correction = α / n
+
+So, here we have an adjusted alpha level of 0.05 / 3 = 0.0167.
+
+Now, in order to reject the null and find evidence that at least two means are different, the p-value from each separate two-sample t-test must be less than 0.0167.
+
+For more info on Bonferroni, see [here](https://statisticsbyjim.com/hypothesis-testing/bonferroni-correction/)
+
+## Multiple Two Sample T Tests and Bonferroni
+
+```{r}
+# Group weight loss by plan
+plan1 <- c(7, 9, 5, 7)
+plan2 <- c(9, 11, 7)
+plan3 <- c(15, 12, 18)
+
+# Run three t tests
+t.test(plan1, plan2) #p = 0.23 
+t.test(plan1, plan3) #p = 0.03
+t.test(plan2, plan3) #p = 0.053
+
+### Defaults to t.test: 
+### var.equal = FALSE (Welch test)
+### alternative = 'two.sided'
+
+### For more info on t.test, see t.test documentation or https://www.statology.org/two-sample-t-test-in-r/
+```
+
+We would fail to reject the null for all these tests using the Bonferroni correction (which is why it's the most stringent test).
+
+Sadly, our probability of Type II error increases (we get more false negatives), and the statistical power of our test decreases. We may miss out on the efficacy of the treatments.

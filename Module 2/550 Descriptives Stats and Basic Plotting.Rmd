@@ -1,0 +1,1334 @@
+---
+title: "550 Descriptive Statistics & Basic Plotting"
+output: pdf
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# VIDEO: Loading the donors dataset
+
+The donors dataset comes from "Practical Machine Learning with R" by
+Nwanganga and Chapple (p. 166-68), along with their description:
+
+The dataset comes from a national veterans' organization that frequently
+solicits donations through direct mail campaigns to its database of
+current and prospective donors. The organization sent out a test mailing
+to a group of potential donors and gathered information on the response
+to that test mailing.
+
+## Load the data
+
+Download the `donors.csv` and this Rmd notebook from Brightspace.
+
+Remember to save the csv in the same folder as the Rmd notebook;
+otherwise, you will need to set your working directory. See previous
+module for video assistance.
+
+## Load the data
+
+```{r}
+donors <- read.csv("donors.csv")
+```
+
+## View the data
+
+```{r}
+donors
+```
+
+## View the structure of the data
+
+```{r}
+str(donors)
+```
+
+## View summary statistics of the data
+
+```{r}
+summary(donors)
+
+### Note all the NAs!
+```
+
+## Sample the first 20 donors and store the new data frame
+
+```{r}
+donors1_20 <- donors[1:20, ]
+
+donors1_20
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Measures of Center: The Mean
+
+*Descriptive statistics*: numbers that describe a data set
+
+*Exploratory Data Analysis* (EDA)
+
+Measures of Center give us an estimate of the center of a distribution
+
+aka measures of "central tendency", the "average"
+
+## The Mean
+
+The average: sum up the numbers and divide by the total
+
+aka, the arithmetic mean
+
+There are other "means": geometric mean and harmonic mean (not in this
+course)
+
+$$
+\frac{X_1 + X_2 + ... + X_{N-1} + X_N}{N}
+$$
+
+That formula is too long; let's write it as a summation instead:
+
+$$
+\frac{\sum_{i=1}^{N} X_{i}}{N}
+$$
+
+### Find the mean age of the first twenty donors "by hand"
+
+```{r}
+donors1_20$age
+
+length(donors1_20$age) # includes NAs
+
+(60 + 46 + 70 + 78 + 38 + 65 + 75 + 72 + 70 + 44 + 46 + 62)
+
+(60 + 46 + 70 + 78 + 38 + 65 + 75 + 72 + 70 + 44 + 46 + 62) / 12
+```
+
+### Find the mean with a built-in function
+
+```{r}
+mean(donors1_20$age)
+View(donors)
+```
+
+This aggravation is actually really helpful...R won't let you calculate
+the mean because the data isn't "clean" yet.
+
+### Ok, let's try again
+
+```{r}
+# Sample mean
+mean(donors1_20$age, na.rm = TRUE)
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Stats vs Parameters, Samples vs Populations
+
+```{r}
+# Sample mean
+mean(donors1_20$age, na.rm = TRUE)
+```
+
+## How well does statistic estimate the parameter?
+
+```{r}
+# Population mean
+mean(donors$age, na.rm = TRUE)
+```
+
+That's pretty close! But we did get lucky that the ages of the first
+twenty happened to be fairly representative of the population age. We
+should have taken a *random* sample of all donors.
+
+*Random samples* are more likely to be representative of the population
+than convenience samples (where you simply choose whomever you want).
+
+Is the sample representative of the population?
+
+## Important terms
+
+We calculate *statistics* from *samples*.
+
+We calculate *parameters* from *populations*. But, we often don't have
+info on the entire population, so we're hoping our statistic is a good
+estimate of the unknown parameter.
+
+## Symbols for the Mean
+
+The symbol we use for the *sample mean* is "x-bar": $$
+\overline{x} = 60.5
+$$
+
+The symbol we use for the *population mean* is the Greek letter "mu": $$
+\mu = 61.61
+$$
+
+### One more example:
+
+Find the sample and population mean for 'totalGivingAmount'
+
+```{r}
+# Sample mean
+mean(donors1_20$totalGivingAmount, na.rm = TRUE)
+
+# Population mean
+mean(donors$totalGivingAmount, na.rm = TRUE)
+```
+
+There are two main branches of statistics:
+
+-   *Descriptive statistics*: numbers that describe a data set.
+
+-   *Inferential statistics*: using confidence intervals and
+    significance tests to make inferences about a population from a
+    sample
+
+------------------------------------------------------------------------
+
+# VIDEO: Measures of Center: The Median
+
+## The Median
+
+Another descriptive statistic, specifically a measure of center (or,
+measure of central tendency)
+
+The middle number when all the data is *ordered* (from least to
+greatest, or v.v.)
+
+"the median"
+
+```{r}
+donors1_20$age
+
+sort(donors1_20$age, decreasing = FALSE) #default is False
+```
+
+`?sort`
+
+### Calculating the middle
+
+```{r}
+data <- c(1, 5, 7, 10, 12)
+median(data)
+
+data2 <- c(1, 5, 7, 10)
+median(data2)
+```
+
+### Sample median vs. population median
+
+```{r}
+# Sample median
+median(donors1_20$totalGivingAmount, na.rm = TRUE)
+
+# Population median
+median(donors$totalGivingAmount, na.rm = TRUE)
+```
+
+This sample median does not do a good job at estimating the population
+median.
+
+1)  Perhaps it's sampling variability
+
+2)  Perhaps the first 20 rows aren't really a good representation of the
+    population
+
+### Resistant Measures of Center
+
+```{r}
+mean(donors1_20$totalGivingAmount, na.rm = TRUE)
+
+median(donors1_20$totalGivingAmount, na.rm = TRUE)
+```
+
+Why are these so different?
+
+Let's look at the data on a *dotplot* (called a stripchart in R):
+
+```{r}
+donors1_20$totalGivingAmount
+```
+
+```{r}
+# Make dotplot
+stripchart(donors1_20$totalGivingAmount, # identify my variable of interest
+  method = "stack",                      # stack identical giving amounts
+  xlab = "Total $ Given",                # label the x-axis
+  ylim = c(0, 1000),                     # make sure the graph fits vertically
+  pch = 16,                              # use dots for each donor
+  cex = 1.5                              # make the dots a bigger size
+) 
+
+# Add vertical lines at mean & median
+abline(v = 97.65, col = "red") # mean
+abline(v = 62.5, col = "green") # median
+```
+
+The mean is influenced by outliers. It is pulled towards the outliers.
+In other words, it is *sensitive* to extreme values.
+
+The median is *resistant* to extreme values like outliers.
+
+### Which will be greater: the mean or median?
+
+1.  1.8, 1.9, 2.3, 2.5, 4.0
+
+2.  10, 50, 50, 60, 60, 70
+
+------------------------------------------------------------------------
+
+# VIDEO: Measures of Center: The Trimmed Mean (and the Mode)
+
+## The Trimmed Mean
+
+Another measure of center that tries to blend the mean and median is the
+*trimmed mean*. It will "trim" (throw out) a certain percentage on each
+end of the data, making it more *resistant* than simply using the mean.
+
+```{r}
+mean(donors$totalGivingAmount, na.rm = TRUE)
+
+mean(donors$totalGivingAmount, trim = 0.25, na.rm = TRUE) # 25% of top, 25% of bottom
+
+# Recall median was 78
+```
+
+The most common trimmed mean is 10% (10% off the top; 10% of the bottom)
+
+## The Mode
+
+-   What value occurs the most?
+
+-   Could we used for quantitative or categorical data
+
+-   No R built-in function
+
+-   What if there's a tie? "Bimodal" or "multi-modal"
+
+-   I consider the mode as an indication of the *shape* of a
+    distribution, more than a measure of the "center"
+
+```{r}
+bimodal_data <- c(rep(0, 9), 1, 3, 4, 5, 6, 8, rep(10, 9))
+
+stripchart(bimodal_data, method = "stack", pch = 16, ylim = c(0, 10))
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Describing Shapes with Histograms
+
+*Histograms* are a popular graph when you have a large amount of
+numerical data (integer or ratio).
+
+Since the data is grouped into categories ("bins"), you cannot see
+actual values of the data like other graphs (dotplot and stemplot).
+
+Histograms are useful to visualize the *shape* of a distribution. Some
+basic shapes:
+
+1)  Right-skewed
+2)  Left-skewed
+3)  Roughly symmetric
+
+-   Unimodal
+-   Bimodal
+-   Uniform
+-   Normal
+
+## Right Skewed
+
+The tail of the distribution is on the right.
+
+Also known as "positive skew" or "positively skewed"
+
+Note that the mean is greater than the median, due to the extreme values
+on the right.
+
+```{r}
+hist(donors$totalGivingAmount,
+  xlab = "Total $ Given",
+  main = "Right skewed histogram"
+)
+
+abline(v = 104.5, col = "red") ### mean
+abline(v = 78, col = "green") ### median
+```
+
+## Left-skewed
+
+The tail is on the left.
+
+Also known as "negative skew" or "negatively skewed"
+
+What will be the relationship between the mean and median?
+
+Let's look at a *histogram*:
+
+```{r}
+# plot histogram
+hist(donors$wealthRating,
+  xlab = "Wealth Rating",
+  main = "Left skewed histogram"
+)
+
+# Calculate mean and median wealth rating
+wealth_mean <- mean(donors$wealthRating, na.rm = TRUE)
+wealth_median <- median(donors$wealthRating, na.rm = TRUE)
+
+# Plot vertical lines at mean & median
+abline(v = wealth_mean, col = "red")
+abline(v = wealth_median, col = "green")
+```
+
+## Roughly symmetric
+
+-   no clear tail on one side
+
+-   you can *roughly* divide the graph down the middle and get a mirror
+    reflection
+
+If the mean is approximately equal to the median, the distribution is
+likely to be roughly symmetric.
+
+```{r}
+hist(donors$incomeRating, 
+     xlab = "Income Rating", 
+     main = "Roughly symmetric histogram"
+     )
+
+income_mean <- mean(donors$incomeRating, na.rm = TRUE)
+income_median <- median(donors$incomeRating, na.rm = TRUE)
+
+abline(v = income_mean, col = "red")
+abline(v = income_median, col = "green")
+```
+
+The *mean* is also known as the "balance point" of the distribution.
+
+The *median* is also known as the "equal areas point" of the
+distribution.
+
+------------------------------------------------------------------------
+
+# VIDEO: Dotplots and Stemplots
+
+These types of graphs are used with *small* sets of quantitative data
+(integer & ratio)
+
+## Dotplots
+
+### Most Basic
+
+```{r}
+stripchart(donors1_20$age)
+```
+
+### Better dotplot
+
+```{r}
+stripchart(donors1_20$age, # identify my variable of interest
+  method = "stack",        # stack identical giving amounts
+  xlab = "Age",            # label the x-axis
+  ylim = c(0, 10),         # put the dots closer to the axis
+  pch = 16,                # use dots for each donor
+  cex = 2                  # make the dots a smaller size
+) 
+```
+
+## Stemplot
+
+-   aka, stem-and-leaf plot
+-   It's basically a histogram, where similar numbers are grouped
+    together
+-   In the stemplot below, note the key: the stem = 10s place; the leaf
+    = 1s place
+
+```{r}
+donors1_20$age
+
+stem(donors1_20$age)
+```
+
+### Compare histogram to stemplot
+
+```{r}
+hist(donors1_20$age, 
+     breaks = 5,      # 5 groups
+     right = FALSE,   # e.g., 70-79 is a bin, not 71-80
+     xlab = "Age",
+     main = ""
+     )   
+```
+
+Benefits:
+
+-   see the actual values
+
+-   can help with shape
+
+-   gaps & clusters appear
+
+Drawbacks:
+
+-   Only good with small amount of observations
+
+-   Hard to read (i.e., don't give your boss this!)
+
+------------------------------------------------------------------------
+
+# VIDEO: Graphs for Categorial Data
+
+The type of graph we use is largely dependent on the type of data we are
+visualizing.
+
+Suppose we're interested in visualizing the geographical areas that our
+donors reside in, captured in the `urbanicity` variable.
+
+Histograms are not "bar graphs"!
+
+## Dotplots don't work with categorical data
+
+```{r}
+stripchart(donors$urbanicity)
+```
+
+## Histograms don't work with categorical data
+
+```{r}
+hist(donors$urbanicity)
+```
+
+## Table of counts
+
+```{r}
+table(donors$urbanicity)
+```
+
+## Table of Proportions
+
+```{r}
+# Table of proportions (numbers from 0 to 1)
+proportions(table(donors$urbanicity))
+
+
+# Convert the proportions into percentages to the nearest tenth
+round(proportions(table(donors$urbanicity)), 3) * 100
+```
+
+## Basic bargraph (barplot)
+
+Note you need to make the table first!
+
+```{r}
+barplot(table(donors$urbanicity))
+```
+
+# Cautions on Language
+
+There is no "center" of a bargraph!
+
+Bargraphs are not "skewed" or "symmetric"!
+
+## A Better Bargraph
+
+```{r}
+barplot(table(donors$urbanicity),
+  las = 1,                          # Rotate the numbers of the y-axis
+  ylab = "Count",                   # Label the y-axis
+  cex.axis = 0.75,                  # Make the numbers of y-axis smaller font
+  main = "How do we increase the number of urban donors?",
+  col = c(rep("gray", 4), "red")    # color the first four gray; the last red
+) 
+```
+
+## Bargraph with two categorical variables
+
+### Q: Make a table showing the association between a donor's geographical location (urbanicity) and if they responded to a mailing.
+
+```{r}
+table(donors$urbanicity, donors$respondedMailing)
+```
+
+```{r}
+round(proportions(table(donors$urbanicity, donors$respondedMailing)), 3)
+```
+
+```{r}
+urban_respMail <- table(donors$respondedMailing, donors$urbanicity)
+
+barplot(urban_respMail)
+```
+
+## Pie charts
+
+-   Very common, but limited use
+
+-   Rectangles (bars) are easier to interpret and create than circles;
+    humans aren't good at estimating quantity based on angles
+
+-   The total must equal to 100% so categories have to be mutually
+    exclusive
+
+-   Google "bad pie charts"
+
+-   For more, see
+    [here](https://evolytics.com/blog/8-dont-use-pie-charts/)
+
+-   For more examples of misleading graphs, see this [wikipedia
+    page](https://en.wikipedia.org/wiki/Misleading_graph)
+
+------------------------------------------------------------------------
+
+# VIDEO: The Five-Number Summary
+
+Measures of center (like the mean and median) are helpful, but it's
+often helpful to have more information to help us understand the
+variables we're investigating.
+
+## The minimum
+
+The lowest value in the data
+
+```{r}
+min(donors$age)
+```
+
+```{r}
+min(donors$age, na.rm = TRUE)
+```
+
+This is a good candidate to investigate!
+
+## The maximum
+
+The highest value in the data
+
+```{r}
+max(donors$age, na.rm = TRUE)
+```
+
+## The 25th percentile
+
+25% of the data is below this number; 75% of the data is above this
+number
+
+aka, the first quartile, Q1, 1st Qu.
+
+25 percent of donors are <48 years old.  
+
+```{r}
+quantile(donors$age, 0.25, na.rm = TRUE)
+```
+
+Interpret this value!
+
+## The 50th percentile
+
+Half of the data is below this number; half of the data is above this
+number
+
+The 50th percentile is also known as...
+
+```{r}
+quantile(donors$age, 0.50, na.rm = TRUE)
+
+median(donors$age, na.rm = TRUE)
+```
+
+Interpret this value!
+
+## The 75th percentile
+
+75% of the data is below this number; 25% of the data is above this
+number
+
+The third quartile, Q3, 3rd Qu.
+
+```{r}
+quantile(donors$age, 0.75, na.rm = TRUE)
+```
+
+## All quartiles at once
+
+```{r}
+quantile(donors$age, probs = c(0.25, 0.50, 0.75), na.rm = TRUE)
+```
+
+## The Five-Number Summary (and more) all at once
+
+```{r}
+summary(donors$age, na.rm = TRUE)
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Visualizing the Five-Number Summary with Boxplots
+
+```{r}
+summary(donors$age, na.rm = TRUE)
+```
+
+## The most basic boxplot
+
+Identify the 5-number summary in the boxplot below:
+
+```{r}
+boxplot(donors$age)
+```
+
+## A Better Boxplot
+
+```{r}
+boxplot(donors$age,
+  xlab = "Age",             # label the x-axis with variable of interest
+  horizontal = TRUE,        # change from vertical to horizontal boxplot
+  pch = 16,                 # make outliers filled-in points
+  col = "lightblue",        # change color from gray to blue
+  main = "Half of our donors are over 60 yrs old" # informative title
+) 
+
+
+# To left-justify the title:
+# title(main = "Half of our donors are over 60 years old", adj = 0)
+```
+
+Identify the 5-number summary in the boxplot above.
+
+## Comparative boxplots
+
+Compare a numeric variable to a categorical variable
+
+In other words, compare a quantity across different groups.
+
+boxplot(Quantity \~ Factor)
+
+### Is there a difference in age among the genders of the donors?
+
+```{r}
+boxplot(age ~ gender, data = donors)
+```
+
+### Is there a difference in income rating among the genders of the donors?
+
+```{r}
+boxplot(incomeRating ~ gender, data = donors)
+```
+
+### The problem with too many outliers
+
+#### Does one gender tend to give more overall than another?
+
+```{r}
+boxplot(totalGivingAmount ~ gender, data = donors)
+```
+
+#### Do higher income ratings actually give more money?
+
+```{r}
+boxplot(totalGivingAmount ~ incomeRating, data = donors)
+```
+
+### Why don't we use boxplots when both variables are quantitative?
+
+```{r}
+boxplot(smallestGiftAmount ~ largestGiftAmount, data = donors)
+```
+
+Benefits: - Easily tell the min/max/median - Good with lots of
+individuals (big sample sizes) - Great visual for one quantatitive
+variable across multiple groups - Easy to tell outliers! - Can help with
+shape (left-skewed, right-skewed, roughly symmetric)
+
+Drawbacks: - You can't tell how many individuals are represented - Gaps
+and peaks and clusters are hidden - If there are lots of outliers,
+they're hard to read
+
+------------------------------------------------------------------------
+
+# VIDEO: Measures of Variability
+
+aka, measures of spread
+
+## Both of these datasets have the same mean and median.
+
+```{r}
+data1 <- c(0, 50, 100)
+mean(data1)
+
+
+data2 <- c(50, 50, 50)
+mean(data2)
+```
+
+## 1) The Range
+
+The most basic measure of variability:
+
+$$
+range = maximum - minimum
+$$
+
+Not that useful, since it only uses two values, both of which can be
+inflated by outliers.
+
+The range is a *single number*...not a 'range' of numbers.
+
+R does not have a built-in range function
+
+```{r}
+range(donors$age, na.rm = TRUE)
+```
+
+### Use max and min
+
+```{r}
+max(donors$age, na.rm = TRUE) - min(donors$age, na.rm = TRUE)
+```
+
+### Use diff
+
+```{r}
+diff(range(donors$age, na.rm = TRUE))
+```
+
+## 2) Interquartile Range (IQR)
+
+A resistant measure of variability, based on the first and third
+quartiles (Q1 & Q3).
+
+$$
+IQR = Q_{3} - Q_{1}
+$$
+
+The IQR tells use the range of the middle 50% of the data.
+
+We will also use the IQR to calculate what values count as outliers.
+
+```{r}
+IQR(donors$age, na.rm = TRUE)
+```
+
+```{r}
+quantile(donors$age, 0.25, na.rm = TRUE)
+quantile(donors$age, 0.75, na.rm = TRUE)
+
+75 - 48
+```
+
+### Reminder: Sample vs. Population
+
+```{r}
+# Sample IQR
+IQR(donors1_20$age, na.rm = TRUE)
+
+# Population IQR
+IQR(donors$age, na.rm = TRUE)
+```
+
+## 3) Other Measures of Spread
+
+-   Mean Absolute Deviation (see textbook 5.2)
+-   Median Absolute Deviation (see textbook 5.2)
+-   Standard Deviation
+
+------------------------------------------------------------------------
+
+# VIDEO: Calculating Outliers with the 1.5IQR Rule
+
+## Review: What do you learn about the total giving amount from this sample of the first 20 donors?
+
+```{r}
+boxplot(donors1_20$totalGivingAmount,
+  xlab = "Total Given ($)", # label the x-axis with variable of interest
+  horizontal = TRUE,        # change from vertical to horizontal boxplot
+  pch = 16,                 # make outliers filled-in points
+  col = "lightblue",        # change color from gray to blue
+  main = ""                 # we'll wait on including an informative title
+) 
+
+```
+
+## How are outliers calculated in boxplots?
+
+We use the interquartile range (IQR) in the formula, along with the
+first and third quartiles.
+
+$$\mbox{High Outlier} > Q3 + 1.5(IQR)$$
+$$\mbox{Low Outlier} < Q1 - 1.5(IQR)$$ The 1.5 is just a benchmark;
+there's no mathematical reason for it.
+
+```{r}
+# List 5-number summary
+summary(donors$age, na.rm = TRUE)
+
+# Store the IQR
+my_IQR <- IQR(donors$age, na.rm = TRUE)
+my_IQR
+
+# Store the quartiles
+my_Q1 <- quantile(donors$age, 0.25, na.rm = TRUE)
+my_Q3 <- quantile(donors$age, 0.75, na.rm = TRUE)
+```
+
+```{r}
+# Use the 1.5IQR rule to determine "fences"
+lower_fence <- my_Q1 - 1.5*(my_IQR)
+upper_fence <- my_Q3 + 1.5*(my_IQR)
+
+lower_fence
+upper_fence
+```
+
+For the age variable, any value less than 7.5 counts as an "outlier";
+any value more than 115.5 counts as an outlier.
+
+## R does this calculation for you when it plots a boxplot
+
+```{r}
+boxplot(donors$age,
+  xlab = "Age",             # label the x-axis with variable of interest
+  horizontal = TRUE,        # change from vertical to horizontal boxplot
+  pch = 16,                 # make outliers filled-in points
+  col = "lightblue",        # change color from gray to blue
+  main = ""                 # we'll wait on including an informative title
+) 
+
+```
+
+All the values less than 7.5 are marked as outliers. There are no values
+greater than 115.5, so there are no high outliers.
+
+## Q: Which do you think will be greater - the mean or the median? Why?
+
+## Boxplot with no outliers
+
+```{r}
+boxplot(donors1_20$age,
+  xlab = "Age",             # label the x-axis with variable of interest
+  horizontal = TRUE,        # change from vertical to horizontal boxplot
+  pch = 16,                 # make outliers filled-in points
+  col = "lightblue",        # change color from gray to blue
+  main = "No outliers! ...what's the shape?"   # informative title
+) 
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Measures of Variability: The Standard Deviation
+
+-   The most common measure of variability with lots of applications
+
+-   aka, StDev, sd, SD
+
+-   A relative of the "mean absolute deviation"
+
+## Let's walk through how standard deviation is calculated, step-by-step
+
+1)  Take some data and find the mean
+
+```{r}
+my_data <- c(0, 5, 5, 5, 10, 50)
+
+my_mean <- mean(my_data)
+```
+
+2)  Find how far each data point is from the mean
+
+```{r}
+diff <- my_data - my_mean
+diff
+```
+
+3)  Square each of the differences
+
+```{r}
+diff^2
+```
+
+4)  Sum up the squared differences
+
+```{r}
+sum(diff^2)
+```
+
+5)  Divide by the total amount of data points; this amount is called
+    "the variance"
+
+```{r}
+my_var <- sum(diff^2) / length(my_data)
+my_var
+```
+
+We don't often use variance because the units are squared.
+
+6)  Square root the variance = standard deviation!
+
+```{r}
+sqrt(my_var)
+```
+
+## Faster way
+
+```{r}
+var(my_data) # variance
+
+sd(my_data) # standard deviation
+```
+
+## Why are the values different?
+
+We calculated the *population* standard deviation; R gives the *sample*
+standard deviation.
+
+## Formulas for Population and Sample StDev
+
+The sample standard deviation is given by the formula $$ 
+Sample StDev = \sqrt\frac{\sum_{i=1}^{n} (x_{i}-\overline{x})^2}{n-1}
+$$
+
+The population standard deviation is given by the formula $$
+\sigma = \sqrt\frac{\sum_{i=1}^{n} (x_{i}-\mu)^2}{n}
+$$
+
+## How do we interpret StDev?
+
+An observation in the data is typically 18.64 units away from the mean.
+
+## Recap: These datasets have the same measures of center.
+
+```{r}
+data1 <- c(0, 0, 50, 100, 100) # include 1000 and see what happens
+mean(data1)
+
+data2 <- c(50, 50, 50, 50, 50)
+mean(data2)
+```
+
+```{r}
+sd(data1)
+
+sd(data2)
+```
+
+-   data1 has much more variability from the mean with a sd = 50
+
+-   data2 has no variability from the mean, with a sd = 0
+
+## Facts about StDev
+
+The smallest possible sd is *zero* (sd can not be negative!)
+
+The sd is *not* a resistant measure of variability; it is sensitive to
+outliers and skew.
+
+------------------------------------------------------------------------
+
+# VIDEO: Normal Distribution
+
+See textbook section
+[here](https://learningstatisticswithr.com/book/probability.html#normal)
+
+Bell-shaped, unimodal, symmetric distribution of a quantitative variable
+defined by two numbers: the mean and the standard deviation
+
+$$
+X \sim \mbox{Normal}(\mu,\sigma)
+$$
+
+```{r}
+# needed for printing
+width <- 8
+height <- 6
+emphCol <- rgb(0, 0, 1)
+color <- TRUE
+
+# draw the plot
+xval <- seq(-3, 3, 0.01)
+yval <- dnorm(xval, 0, 1)
+plot(xval, yval,
+  lwd = 3,
+  ylab = "Probability Density",
+  xlab = "Observed Value",
+  frame.plot = FALSE,
+  col = ifelse(color, emphCol, "black"),
+  type = "l"
+)
+```
+
+## The Empirical Rule
+
+aka, 68-95-99.7 rule
+
+For a normally distributed variable,
+
+-   Roughly 68% of the observations are within 1 stdev of the mean
+
+-   Roughly 95% of the observations are within 2 stdevs of the mean
+
+-   Roughly 99.7% of the observations are within 3 stdevs of the mean
+
+```{r}
+plot(xval, yval,
+  lwd = 3,
+  ylab = "Probability Density",
+  xlab = "Observed Value",
+  frame.plot = FALSE,
+  col = ifelse(color, emphCol, "black"),
+  type = "l"
+)
+
+lines(c(-1, -1), c(0, dnorm(-1, 0, 1)), col = "red", lwd = 3)
+lines(c(1, 1), c(0, dnorm(1, 0, 1)), col = "red", lwd = 3)
+
+```
+
+### Suppose IQs are Approximately Normal(100, 15)
+
+```{r}
+curve(dnorm(x, 100, 15), from = 40, to = 160, ylab = "", xlab = "IQ")
+```
+
+```{r}
+curve(dnorm(x, 100, 15), from = 40, to = 160, ylab = "", xlab = "Score")
+title(main = "The Empirical Rule: 68-95-99.7")
+
+# One StDev
+lines(c(85, 85), c(0, dnorm(85, 100, 15)), col = "red", lwd = 3)
+lines(c(115, 115), c(0, dnorm(115, 100, 15)), col = "red", lwd = 3)
+
+# Two StDevs
+lines(c(70, 70), c(0, dnorm(70, 100, 15)), col = "blue", lwd = 3)
+lines(c(130, 130), c(0, dnorm(130, 100, 15)), col = "blue", lwd = 3)
+
+# Three StDevs
+lines(c(55, 55), c(0, dnorm(55, 100, 15)), col = "green", lwd = 3)
+lines(c(145, 145), c(0, dnorm(145, 100, 15)), col = "green", lwd = 3)
+```
+
+68% of adults have IQs between 85 and 115
+
+95% of adults have IQs between 70 and 130
+
+99.7% of adults have IQs between 55 and 145
+
+```{r}
+par(mfrow = c(1, 2))
+
+plotOne <- function(a, b) {
+  plot.new()
+  w <- 4
+  plot.window(xlim = c(-w, w), ylim = c(0, .4))
+  xval <- seq(max(a, -w), min(b, w), .01)
+  yval <- dnorm(xval, 0, 1)
+  end <- length(xval)
+  polygon(c(xval[1], xval, xval[end]),
+    c(0, yval, 0),
+    col = ifelse(color, emphCol, "black"),
+    density = 10
+  )
+  xval <- seq(-w, w, .01)
+  yval <- dnorm(xval, 0, 1)
+  lines(xval, yval, lwd = 2, col = "black")
+  axis(side = 1, at = -w:w)
+  area <- abs(pnorm(b, 0, 1) - pnorm(a, 0, 1))
+  title(main = paste("Shaded Area = ", round(area * 100, 1), "%", sep = ""), font.main = 1)
+}
+
+plotOne(-1, 1)
+plotOne(-2, 2)
+
+par(mfrow = c(1, 1))
+```
+
+## Where do the numbers 68-95-99.7 come from?
+
+## What if the data isn't normally distributed, like right-skewed?
+
+Chebyshev's Theorem
+
+------------------------------------------------------------------------
+
+# VIDEO: Connecting Center & Spread
+
+## Compare A & B
+
+Distribution A: mean = 20, median = 20, stdev = 5 Distribution B: mean =
+20, median = 15, stdev = 5
+
+## Compare C & D
+
+Distribution C: mean = 0, median = 20, stdev = 8 Distribution D: mean =
+20, median = 10, stdev = 6
+
+## Compare E & F
+
+Distribution E: mean = 20, median = 20, stdev = 4 Distribution F: mean =
+10, median = 10, stdev = 8
+
+## Which distributions cannot be normally distributed?
+
+We'll assume that 0 is the smallest possible value in each distribution.
+
+To qualify, you need space enough to go 3 standard deviations to the
+left and to the right of the mean.
+
+Normal distributions are symmetric
+
+------------------------------------------------------------------------
+
+# VIDEO: Kurtosis and Skew
+
+See the Textbook section
+[here](https://learningstatisticswithr.com/book/descriptives.html#skewandkurtosis)
+for diagrams of the following:
+
+*Skew*: measure of asymmetry
+
+-   negative: left-skew
+
+-   zero: symmetric
+
+-   positive: right-skew
+
+*Kurtosis*: measure of pointedness/peakedness, flatness, heavy tails
+compared to a normal curve
+
+-   Less than 3: flatter than normal curve (heavy/thick tails)
+
+-   Equals 3: normal curve
+
+-   More than 3: more pointed than normal curve (light/thin tails)
+
+Note there are different formulas to calculate both
+
+These may be reported, so it's nice to know the terms, but they are not
+frequently used.
+
+------------------------------------------------------------------------
+
+# VIDEO: Standardized Scores (z-scores)
+
+You made a 27 on the ACT and a 1600 on the SAT - on which test did you
+do better?
+
+In order to compare units on different scales, we can standardize the
+scale.
+
+In inferential statistics, a "test statistic" is a standardized score.
+
+$$
+\mbox{standard score} = \frac{\mbox{raw score} - \mbox{mean}}{\mbox{standard deviation}}
+$$
+
+In math symbols, the equation for the z-score is
+
+$$
+z_i = \frac{X_i - \bar{X}}{\hat\sigma}
+$$
+
+## Z-score Example
+
+Let's consider the first donor in our data set, who gave 31 donations
+with an average of 7.74 per donation.
+
+### Number of Gifts
+
+```{r}
+# Calculate the mean
+mean_gifts <- mean(donors$numberGifts, na.rm = TRUE)
+
+# Calculate the stdev
+sd_gifts <- sd(donors$numberGifts, na.rm = TRUE)
+
+# Calculate z-score
+(31 - mean_gifts) / sd_gifts
+```
+
+### Average gift amount
+
+```{r}
+# Calculate the mean
+mean_amount <- mean(donors$averageGiftAmount, na.rm = TRUE)
+
+# Calculate the stdev
+sd_amount <- sd(donors$averageGiftAmount, na.rm = TRUE)
+
+# Calculate z-score
+(7.74 - mean_amount) / sd_amount
+```
+
+## Interpret z-score
+
+In terms of number of donations, this donor is 2.5 standard deviations
+above average!
+
+In terms of the average gift amount, this donor is -0.52 standard
+deviations below average!
+
+### More Comments
+
+1.  Not all negative z-scores are bad
+
+    -   Golf scores: since lower scores are better, you want to be below
+        the average score
+
+    -   Time to complete a marathon: since lower times are faster, you
+        want to below the average time to complete
+
+2.  If your z-score = 0, what does this tell you?
+
+3.  Connections: When a normal distribution has a mean of 0 and a stdev
+    of 1, we call it a *standard* normal distribution.
+
+------------------------------------------------------------------------
+
+# VIDEO: Using z-scores
+
+How can we compare Major League baseball players from different eras?
+
+Which player had the best homerun (HR) hitting performance, relative to
+their peers?
+
+| Year | Player       | HR  | Mean | StDev |
+|------|--------------|-----|------|-------|
+| 1927 | Babe Ruth    | 60  | 7.2  | 9.7   |
+| 1961 | Roger Maris  | 61  | 18.8 | 13.4  |
+| 1998 | Mark McGwire | 70  | 20.7 | 12.7  |
+| 2001 | Barry Bonds  | 73  | 21.4 | 13.2  |
+| 2022 | Aaron Judge  | 62  | 19.5 | 10.1  |
+
+## Find the z-score
+
+```{r}
+(ruth <- (60 - 7.2) / 9.7)
+(maris <- (61 - 18.8) / 13.4)
+(mcgwire <- (70 - 20.7) / 12.7)
+(bonds <- (73 - 21.4) / 13.2)
+(judge <- (62 - 19.5) / 10.1)
+```
+
+Conclusion?
+
+------------------------------------------------------------------------
+
+# VIDEO: Conclusion
+
+Good descriptive statistics are descriptive!
+
+From
+[LSR](https://learningstatisticswithr.com/book/descriptives.html#epilogue-good-descriptive-statistics-are-descriptive)
+
+"Thus it is no small thing to say that the first task of the
+statistician and the scientist is to summarise the data, to find some
+collection of numbers that can convey to an audience a sense of what has
+happened.
+
+This is the job of descriptive statistics, but it's not a job that can
+be told solely using the numbers. You are a data analyst, not a
+statistical software package. Part of your job is to take these
+statistics and turn them into a description. When you analyse data, it
+is not sufficient to list off a collection of numbers.
+
+Always remember that what you're really trying to do is communicate with
+a human audience. The numbers are important, but they need to be put
+together into a meaningful story that your audience can interpret."

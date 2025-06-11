@@ -1,0 +1,1038 @@
+---
+title: "550 Notes: Inference for Means"
+output: html_notebook
+author: Jeff Eicher, Jr.
+---
+
+### Table to Contents
+
+1)  Confidence Interval for a Population Mean ("T Interval")
+
+2)  Example: One Sample T Interval
+
+3)  What do we mean by "95% confidence"?
+
+4)  Significance Test for a Population Mean ("T Test", "Student's T Test")
+
+5)  Confidence Interval for a Difference in Means ("Two Sample T interval")
+
+6)  Example: Two Sample T Interval (Mechanics)
+
+7)  Two Sample T Interval (Example)
+
+8)  Significance Test for a Difference in Means ("Two Sample T test")
+
+9)  Two Sample T Test (Manual Calculations)
+
+10) CI and Test for a Mean Difference ("Paired T Interval" & "Paired T Test")
+
+11) Assumptions and Conditions for Inference with Means
+
+12) Bootstrap T Confidence Interval
+
+13) On Significance
+
+### ---
+
+### Overview: Inference for Means
+
+Descriptive Statistics vs. Inferential Statistics
+
+Sample vs. Census
+
+Inference: CI and ST (or HT)
+
+Estimate vs. Test
+
+Frequentist vs. Bayesian
+
+Quantitative data (not categorical)
+
+Formulas vs. Technology (education vs. the field)
+
+### ---
+
+## One Sample T Interval for a Population Mean
+
+Point Estimate vs. Interval Estimate
+
+General Formula for a Confidence Interval:
+
+$\mbox{estimate} \pm \mbox{margin of error}$
+
+$\mbox{statistic} \pm \mbox{critical value * standard error of statistic}$
+
+$(\mbox{stat} - \mbox{critical value} * SE, \mbox{stat} + \mbox{critical value} * SE)$
+
+Specific Formula:
+
+$$\bar{x} \pm t_{1-\alpha/2,df}\frac{s_x}{\sqrt{n}}$$
+
+Know what each variable represents!
+
+$$t^*_{1-\alpha/2,df}$$ `t*` is the critical value (aka "quantile")
+
+If CL = 95%, then alpha = 1 - 0.95 = 0.05 (so half = 0.025 = 2.5%)
+
+So, for a two-sided 95% confidence level, we use the 95% + 2.5% = 97.5% quantile (0.975)
+
+degrees of freedom = df = n - 1
+
+Q: Find the t critical value we would use for a 90% confidence interval for a mean based on a sample size of 10.
+
+```{r}
+qt(p = .90 + .05, df = 10-1)
+
+#qt (p = 95, df = 9)
+qt(.95, 9)
+```
+
+Q: Compare your answer using a t table (aka Table B in some textbooks), like this [one](https://www.sjsu.edu/faculty/gerstman/StatPrimer/t-table.pdf).
+
+### ---
+
+## Example: One Sample T Interval
+
+A bank manager wants to know whether or not the bank's customer service agents met the goal of answering incoming calls within 30 seconds. An analyst takes a random sample of 50 calls and finds the sample mean was 18.353 seconds and sample standard deviation 11.761 seconds. The analyst plans to construct a 95% confidence interval for the unknown population mean. (TPS4 p. 515)
+
+#### a) What is the population? What is the parameter we are estimating? unkonw pop m
+
+#### b) What is the sample? What is the statistic that we'll use to estimate the parameter? Is it an unbiased estimate? Why? 50 calls, mean, 
+
+#### c) What type of interval will we use and why? 
+
+#### d) How much does the sample mean vary from sample to sample, just due to sampling variability? 
+
+```{r}
+#
+#SEM = (sample sd) / sqrt(sample size)
+
+
+#Standard Error 
+11.761 / sqrt(50)
+```
+
+SEM represents the standard deviation of the sample means. It quantifies how much the sample mean is expected to vary from the true population mean. A smaller SEM indicates that the sample means are likely to be close to the population mean, while a larger SEM indicates more variability.
+
+#### e) What critical value (`t*`) do we use to attain 95% confidence?
+
+```{r}
+qt (p = .95 + .025, df= 50-1)
+
+#qt (p = .975, df = 49)
+#qt ( .975, 49)
+```
+
+#### f) What is the margin of error?
+
+```{r}
+#ME = critical value * SE
+
+qt(.975, 49)*(11.761/sqrt(50))
+```
+
+The margin of error (ME) of an estimate describes how far, at most, we expect the estimate to vary from the true population value. (SPA3, 204)
+
+#### g) What is the interval?
+
+```{r}
+#CI = statistic +/- ME
+
+#Lower Bound
+18.353 - 3.342
+
+#upper bound 
+18.353 + 3.342
+```
+
+#### h) Interpret the interval in context.  we are 95% confident that (15, 21.7) seconds capture sthe unknown mean time agents answer calls at this bank.  
+
+#### i) Does this interval give convincing evidence that the customer service agents are meeting their goal of "within 30 seconds"?
+
+Final Comments:
+
+$$18.353 \pm 2.010(\frac{11.761}{\sqrt{50}})$$
+
+A 99% CI: (13.9, 22.8)
+
+Intervals and tests have certain conditions that should be met. We'll discuss these in a later video.
+
+If we had the data itself, we could use an R short-cut to calculate the interval: `t.test()`
+
+## ---
+
+## What do we mean by "95% confidence"?
+
+Frequentist interpretation (Bayesians disagree)
+
+RossmanChance Applet [here](https://www.rossmanchance.com/applets/2021/confsim/ConfSim.html)
+
+R Code From *Mathematical Statistics with Resampling and R* by Chihara & Hesterberg
+
+```{r, out.width="100%"}
+
+#set.seed(1)
+counter <- 0                               # set counter to 0
+N <- 10000                                 # number of intervals to create
+
+plot(x = c(22, 28), 
+     y = c(1, 100), 
+     type = "n",
+    xlab = "95% CI for a Mean with Known SD", 
+    ylab = "Interval #")
+
+for (i in 1:N) {
+  x <- rnorm(30, 25, 4)                    # draw a random sample of size 30
+  L <- mean(x) - 1.96 * 4/sqrt(30)         # lower limit
+  U <- mean(x) + 1.96 * 4/sqrt(30)         # upper limit
+  if (L < 25 && 25 < U) {                  # check to see if 25 is in interval
+    counter <- counter + 1                 # increase counter by 1
+    segments(L, i, U, i, col = "black")    # Draw interval in black if it contains mu
+  } else {
+    segments(L, i, U, i, col = "red", 
+             lwd = 2)                      # Draw interval in red if it does not contain mu
+  }
+  if (i <= 100)                            #plot first 100 intervals
+    segments(L, i, U, i)
+}
+
+ abline(v = 25, col = "red")               # vertical line at mu
+
+ counter/N                                 # proportion of times interval contains mu
+```
+
+#### Interpret a confidence level
+
+if we sample many, many times, about C% of our intervals will capture the unkown pop paramter.
+
+#### What affects the margin of error?
+
+[Applet](https://digitalfirst.bfwpub.com/stats_applet/stats_applet_4_ci.html)
+
+Q: The margin of error decreases as the sample size increases (holding everything else constant).
+
+Q: The margin of error increases as the confidence level increases (holding everything else constant).
+
+False: The margin of error accounts for non-sampling issues like poor question wording and sampling issues like selecting a biased sample.
+
+## ---
+
+## Significance Test for a Population Mean
+
+#### Suppose a simple random sample of 50 business travelers is selected and each traveler is asked to provide a rating (from 0 to 10) for the Miami International Airport. The ratings obtained from the sample of 50 business travelers follow:
+
+```{r}
+ratings <- c(6, 4, 6, 8, 7, 7, 6, 3, 3, 8, 10, 4, 8, 7, 8, 7, 5, 9, 5, 8, 4, 3, 8, 5, 5, 4, 4, 4, 8, 4, 5, 6, 2, 5, 9, 9, 8, 4, 8, 9, 9, 5, 9, 7, 8, 3, 10, 8, 9, 6)
+
+# From Camm, et al, Business Analytics, 3rd ed, p. 284
+
+```
+
+#### a) Find summary statistics, both measures of center and variability.
+
+```{r}
+mean(ratings)
+sd(ratings)
+```
+
+#### b) Create an appropriate graphical display of the ratings.
+
+```{r}
+hist(ratings)
+boxplot(ratings, horizontal = TRUE)
+```
+
+#### The airport recently implemented changes in hopes that travelers rate it higher. The FAA believes that the mean rating has increased from a prior year's survey which found the average score was 5.1.
+
+Perform a test of significance at the $\alpha = 0.05$ level.
+
+#### c) What are the null and alternative hypotheses?
+
+```         
+Null Hypothesis:the mean rating for MIA is 5.1
+
+Alternative Hypothesis:the mean rating for MIA is greater than 5.1
+```
+
+$$
+  H_0: \mu = 5.1 \\
+  H_a: \mu > 5.1 \\
+  \mbox{where}\\
+  \mu = \mbox{the unknown population mean rating of MIA for all travelers}
+$$
+
+#### d) Is there some evidence for the alternative hypothesis?
+
+6.34 \> 5.1
+
+#### e) What are two statistical explanations for this evidence?
+
+```         
+1. null hyp is still true, but we have a wacky sample.  
+
+2. null hyp is false, the new mean is 6.34.  
+```
+
+Assuming this sample mean is just due to sampling variability, how likely would we get a mean like this or more extreme just by random chance alone?
+
+#### f) Standardize the statistic (i.e., find the "test statistic").
+
+Z-score formula:
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+T-test statistic formula:
+
+$$t = \frac{\bar{x}-\mu_0}{\frac{s_x}{\sqrt{n}}}$$
+
+```{r}
+(6.34 - 5.1) / (2.162/ sqrt(50))
+
+#sample mean minus pop mean / std dev / sqrt of sample pop
+
+##solution is a lot of std away so the p-value will be small.  
+```
+
+#### g) Calculate the P-value with `pt()`.
+
+```{r}
+pt ( q=4.05, df = 50 - 1, lower.tail = FALSE)
+```
+
+A *P-value* is the probability, under the null hypothesis, of observing a test statistic as extreme or more extreme just due to sampling variability
+
+#### h) Interpret this P-value in context.
+
+assuming the pop mean rating is 5.1 at mia, theres a .0009 prob that we would get 6.34 (t=4.06) or more just due to sampling variability
+
+#### i) Conclude the significance test in context. Include three components.
+
+| Comparison        | $H_0$                   | $H_a$               |
+|-------------------|-------------------------|---------------------|
+| `P-value < alpha` | Reject the null         | Evidence for H_a    |
+| `P-value > alpha` | Fail to reject the null | No evidence for H_a |
+
+Note: We do not "accept" the null hypothesis and we do not find evidence for the null.
+
+Since .00009 \< .05, we reject the null and have evidence that the pop mean is greater than 5.1 at mia.
+
+So if a p-value is low \> likliehood to reject null.
+
+#### j) Use the R short-cut to find the P-value.
+
+```{r}
+t.test(data, mu = ..., alt = ...)$p.value
+
+#t.test(ratings, mu=5.1, alt="greater")
+
+# Note ?t.test help menu
+```
+
+Note the confidence interval provided is "two-sided" but our alternative hypothesis was one-sided (`>`).
+
+## ---
+
+## Two Sample t Interval for the Difference in Population Means
+
+Newborn baby boy lengths vs. Newborn baby girl lengths
+
+$$\mu_{1}-\mu_{2} \\ or\\
+\mu_{boy}-\mu_{girl}$$
+
+General Confidence Interval Formula (Two-Sided)
+
+$$
+estimate \pm \mbox{margin of error} 
+$$
+
+Two Sample T Interval for a Difference in Population Means
+
+$$
+(\bar{x}_1 - \bar{x}_2) \pm t_{1-\alpha/2,df}^*\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}
+$$
+
+#### What degrees of freedom do I use?
+
+1.  Lower estimate: Pick the smaller of the two degrees of freedom for the two samples.
+
+$n_1 = 10, n_2 = 20$
+
+2.  Upper estimate: Add the two sample sizes and subtract two.
+
+$10 + 20 - 2 = 28$
+
+3.  Most accurate: Welch's Approximation
+
+A user-defined R function
+
+### Welch's Approximation for DF
+
+[LSR Discussion](https://learningstatisticswithr.com/book/ttest.html#welchttest)
+
+Let:
+
+$$
+a = \frac{s_1^2}{n_1}\\
+b = \frac{s_2^2}{n_2} \\
+df_1 = n_1-1 \\ 
+df_2 = n_2 - 1
+$$
+
+$$
+df_{welch} = \frac{(a+b)^2}{\frac{a^2}{df_1}+\frac{b^2}{df_2}}
+$$
+
+#### Function to calculate Welch's Approximation
+
+```{r}
+### Input the sample sizes and standard deviations.
+
+welch_df <- function(n1, n2, sd1, sd2) {
+
+  numerator <- (sd1^2 / n1 + sd2^2 / n2)^2
+
+  denominator <- (sd1^2 / n1)^2 / (n1 - 1) + (sd2^2 /     n2)^2 / (n2 - 1)
+
+  df <- numerator / denominator
+
+  return(df)
+}
+
+### Alternate formula where the user inputs the data itself:
+
+# function(x1, x2) {
+#  n1 <- length(x1)
+#  n2 <- length(x2)
+#  sd1 <- sd(x1)
+#  sd2 <- sd(x2) 
+#  ...
+#  }
+
+```
+
+#### Example: R function to calculate Welch's approximation
+
+```{r}
+### Example usage:
+n1 <- 10
+n2 <- 15
+sd1 <- 4.5
+sd2 <- 3.2
+
+ex_df <- welch_df(n1, n2, sd1, sd2)
+
+
+# Print bounds and Welch's estimate
+cat("Lower Estimate: ", min(10 - 1, 15 - 1), "\n")
+cat("Upper Estimate", 10 + 15 - 2, "\n")
+cat("Welch's Approx: ", ex_df, "\n")
+```
+
+Why do we need this?
+
+```{r}
+# 95% confidence interval with n1 = 10, n2 = 15
+
+# Too big
+qt(p = 0.975, df = 9)
+
+# Too low
+qt(p = 0.975, df = 23)
+
+# Just right
+qt(p = 0.975, df = 14.99542)
+```
+
+## ---
+
+## Example: Two Sample t Interval
+
+The US Department of Agriculture (USDA) conducted a survey to estimate the average price in July and in September of the same year. Independent random samples of wheat producers were selected for each of the two months. Here are summary statistics on the reported price of wheat from the selected producers, in dollars per bushel (TPS4, p. 638)
+
+| Month     | n   | $\bar{x}$ | $s_x$   |
+|-----------|-----|-----------|---------|
+| July      | 90  | `$2.95`   | `$0.22` |
+| September | 45  | `$3.61`   | `$0.19` |
+
+Construct and interpret a 99% confidence interval for the difference in the mean wheat price in July and September.
+
+#### a) What parameter are we estimating? What statistic will we use to estimate this parameter? Store it as `wheatStat`.
+
+```{r}
+wheatStat <- 3.61 - 2.95
+wheatStat
+```
+
+#### b) If there were no difference in mean wheat price, what should the statistic equal?
+
+#### c) What are two statistical explanations for this difference in sample means?
+
+1)  
+
+2)  
+
+#### d) What are the bounds for the degrees of freedom? Find df with Welch's approximation.
+
+```{r}
+#lower 
+45-1
+#upper
+90+45 -2
+
+welch_df(45, 90, .19, .22)
+
+```
+
+#### e) Find the standard error. Store it as `wheatSE`.
+
+```{r}
+wheatSE <- sqrt(.19^2 / 45 + .22^2 / 90)
+
+#std dev of sept / sep sample size + std / july sample size
+
+##
+```
+
+$$
+(\bar{x}_1 - \bar{x}_2) \pm t_{1-\alpha/2,df}^*\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}
+$$
+
+#### f) Find the margin of error. Store it as `wheatME`.
+
+```{r}
+t_crit <- qt( p = .995, df = 100.4483)
+t_crit
+
+wheatME <- t_crit * wheatSE
+wheatME
+```
+
+#### g) Calculate ("construct") the interval.
+
+```{r}
+wheatStat - wheatME
+wheatStat + wheatME
+```
+
+Note: We can't use the R short-cut to calculate the interval since we don't have the data.
+
+`t.test(x1, x2, conf.level = ...)$conf`
+
+```{r}
+### Example if we had actual data
+x1 <- c(23, 25, 28, 30, 32)
+x2 <- c(18, 20, 22, 25, 27)
+
+t.test(x1, x2, conf.level = 0.95)$conf
+```
+
+#### h) Interpret the *interval* in context.
+
+we are 99% confident that \$(.56, .76) captures the true unkown diff in pop mean wheat prices from July to Sept.
+
+#### i) Does the interval provide convincing evidence that there is a difference in mean price of wheat in these two months? Explain.
+
+#### Final Comments:
+
+yes the interval givs connvingi evid that there is a diff in mean price of wheat in these two sample.
+
+Formula with df = 133 and order of subtraction: July - Sept
+
+$$
+(2.95 - 3.61) \pm 2.613\sqrt{\frac{0.22^2}{90}+\frac{0.19^2}{45}} 
+\\-0.66 \pm 0.10
+\\ (-0.76, -0.56)
+$$
+
+### ---
+
+## Significance Test for a Difference in Means
+
+Every year, the US releases to the public a large data set containing information on births recorded in the country. This data set has been of interest to medical researchers who are studying the relation between habits and practices of expectant mothers and the birth of their children. The data set contains a random sample of 1000 cases from 2014. Is there convincing evidence that newborns from mothers who smoke have a different birth weight than newborns from mothers who don't smoke? We will perform a test of significance at $\alpha = 0.05$.
+
+From *Intro to Modern Statistics* (IMS), Rundel and Hardin, 1st ed (p. 384)
+
+#### Import data
+
+```{r}
+install.packages("openintro")
+library(openintro)
+
+births <- openintro::births14
+
+head(births, 5)
+```
+
+#### Find weights for nonsmoking and smoking mothers
+
+```{r}
+weightsNon <- subset(births, 
+                     select = weight, 
+                     subset = habit == "nonsmoker")
+
+weightsSmoke <- subset(births, 
+                       select = weight, 
+                       subset = habit == "smoker")
+```
+
+#### Visualize a quantitative variable in two groups
+
+```{r}
+boxplot(weight ~ habit, 
+        data = births, 
+        horizontal = TRUE, 
+        las = 1, 
+        cex.axis = 0.75, 
+        ylab = "", 
+        pch = 16, 
+        xlab = "Weights (lbs)"
+        )
+
+```
+
+#### a) What are the hypotheses?
+
+$$
+H_0: \mu_n - \mu_s = 0\\
+H_a: \mu_n - \mu_s \ne 0
+$$
+
+#### b) Calculate the difference in means (nonsmoker - smoker). Store as `babyStat`. What parameter are we estimating?
+
+```{r}
+mean(weightsNon$weight, na.rm = TRUE) - mean(weightsSmoke$weight, na.rm=TRUE)
+```
+
+#### c) What are two possible explanations for this difference in means?
+
+```         
+1)  
+
+2)  
+```
+
+#### d) Use the R short-cut to calculate the P-value.
+
+```{r}
+t.test(weightsNon$weight, weightsSmoke$weight, conf.level = .95)$p.value
+t.test(weightsNon$weight, weightsSmoke$weight, conf.level = .95)
+```
+
+#### e) Interpret the P-value in context.
+
+assuming that there is no diff in mean birth weights for babies bon to non and smoking moms, there is a .0002075 prob (.02%) that we would observe a diff in sample means of .59 or more extreme just due to sampling variability.
+
+#### f) Make a conclusion. State three things.
+
+a\. since .0002 \< .05
+
+we reject the null and find convin evid that there is a diff in pop mean birght weights for babies born to smoking and non moms.
+
+#### g) What type of error (I or II) might we have made? What's a consequence?
+
+could be a type I, its just evidence and not proof.
+
+#### h) Does the interval provide convincing evidence of a difference in mean birth weights of babies born to non-smoking and smoking mothers?
+
+(.285, .899)
+
+zero pounds i not in this inverval so we have conv evidence.
+
+### ---
+
+### Two Sample T Test (Manual calculations)
+
+The two-sample t-test statistic:
+
+$$
+\mbox{test statistic} = \frac{\mbox{statistic - parameter}}{\mbox{standard error}}
+$$ One-sample T-test statistic:
+
+$$t = \frac{\bar{x}-\mu}{\frac{s_x}{\sqrt{n}}}$$
+
+$$
+t = \frac{(\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}}
+$$
+
+| habit     | n   | Mean | SD   |
+|-----------|-----|------|------|
+| nonsmoker | 867 | 7.27 | 1.23 |
+| smoker    | 114 | 6.68 | 1.60 |
+
+1)  Find the test statistic.
+
+```{r}
+numerator <- (7.27 - 6.68) - (0)
+denom <- sqrt(1.23^2/867 + 1.60^2/114)
+
+numerator / denom    #different from t.test() due to rounding the means and SDs
+
+t.test(weightsNon, weightsSmoke, conf.level = 0.95)$statistic
+
+```
+
+2)  Find the P-value with `pt()`. Remember the $H_a$ is two-sided.
+
+```{r}
+# Multiply by two since H(a) is two-sided
+# Using lower bound for degrees of freedom
+# Using test statistic based on rounded means and SDs
+
+2 * pt(q = 3.793, df = 114-1, lower.tail = F)
+
+t.test(weightsNon, weightsSmoke, conf.level = 0.95)$p.value
+```
+
+### Written out test statistic formula
+
+$$
+t = \frac{(7.27 - 6.68) - (0)}{\sqrt{\frac{1.23^2}{867} + \frac{1.60^2}{114}}}
+$$
+
+### ---
+
+## Paired T Interval and Test for a Mean Difference
+
+Two-sample t intervals assume that the samples are independent for computing the standard errors. They are not independent when working with paired data. Typically x1 and x2 are positively correlated so assuming independence would overestimate the standard errors for $\bar{x}_1 - \bar{x}_2$.
+
+The parameter we are estimating is the mean difference for the population: $$\mu_{diff}$$
+
+Paired T Interval for an Unknown Mean Difference
+
+$$\bar{x}_{d} \pm t^*\frac{s_{d}}{\sqrt{n_{d}}}$$
+
+where `t*` denotes the $1 - \frac{\alpha}{2}$ quantile of the t-distribution with $n_d - 1$ degrees of freedom.
+
+### Example: Caffeine withdrawal
+
+Researchers designed an experiment to study the effects of caffeine withdrawal. They recruited 11 volunteers who were diagnosed as being caffeine dependent to serve as subjects. Each subject was barred from coffee, colas, and other substances with caffeine for the duration of the experiment. During one two-day period, subjects took capsules containing their normal caffeine intake. During another two-day period, they took placebo capsules. The order in which subjects took caffeine and the placebo was randomized. At the end of each two-day period, a test for depression was given to all 11 subjects. Researchers wanted to know whether being deprived of caffeine would lead to an increase in depression. (TPS4, p. 577-78)
+
+The table contains data on the subjects' scores on a depression test. Higher scores show more symptoms of depression.
+
+| Subject | Depression (caffeine) | Depression (placebo) |
+|---------|-----------------------|----------------------|
+| 1       | 5                     | 16                   |
+| 2       | 5                     | 23                   |
+| 3       | 4                     | 5                    |
+| 4       | 3                     | 7                    |
+| 5       | 8                     | 14                   |
+| 6       | 5                     | 24                   |
+| 7       | 0                     | 6                    |
+| 8       | 0                     | 3                    |
+| 9       | 2                     | 15                   |
+| 10      | 11                    | 12                   |
+| 11      | 1                     | 0                    |
+
+#### a) Note 2-3 good experimental design principles the researchers used.
+
+#### b) What makes this a "paired" t procedure rather than a two-sample procedure?
+
+#### c) Input the data; calculate the difference for each subject (placebo - caffeine); store it as `expdiffs`.
+
+```{r}
+caff <- c(5, 5, 4, 3, 8, 5, 0, 0, 2, 11, 1)
+placebo <- c(16, 23, 5, 7, 14, 24, 6, 3, 15, 12, 0)
+
+exdiffs <- placebo - caff
+exdiffs
+
+```
+
+#### d) Visualize the differences with an appropriate display.
+
+```{r}
+boxplot(exdiffs, horizontal = T )
+```
+
+#### e) Find the mean, standard deviation, and sample size for the differences in depression scores. Store them.
+
+```{r}
+mean_d <- mean(exdiffs)
+sd_d <- sd(exdiffs)
+n_d <- length(exdiffs)
+
+```
+
+#### f) What parameter are we estimating? What statistic will we use to estimate it?
+
+we are estimating the true diff of mean on plac vs. caff
+
+#### g) Write hypotheses for the significance test the researchers would use.
+
+-   Null:mean diff = 0
+
+-   Alternative: mean diff != 0
+
+#### h) Use the R short-cut to calculate the (two-sided) confidence interval and find the P-value.
+
+```{r}
+t.test(exdiffs, conf.level = .95, alt='two.sided')#$conf or #$p.value
+```
+
+Technically, we would need a one-sided CI for this alternative hypothesis.
+
+#### i) Interpret the P-value in context.
+
+p-value : 0.005
+
+sample mean diff: 7.36
+
+assuming that there is no diff bn depression score when an ind takes the placebo or caff, theres' a .005 proba that we would get a sample mean diff of 7.36 or more extreme just due to sampling mean variability.
+
+#### j) Conclude the significance test. Address three components.
+
+1.  Compare since .005 \< .05
+2.  Ho reject the null
+3.  Ha we have conv evid that the mean diff (placebo - caff) on the depression test is a different than zero.
+
+#### k) Does the interval provide convincing evidence that there is a difference in depression scores, on average, between the two treatments? Explain.
+
+Formula using df = 10 and 95% CL for *two-sided* CI:
+
+$$
+7.364 \pm(2.23)\frac{6.912}{\sqrt{11}}
+$$
+
+Test statistic formula:
+
+$$
+t = \frac{7.364-0}{\frac{6.912}{\sqrt{11}}}=3.53
+$$
+
+Two-sided P-value calculation:
+
+```{r}
+2 * pt(q = 3.53, df = 10, lower.tail = FALSE)
+```
+
+### ---
+
+## Assumptions and Conditions for T-Procedures
+
+#### 1) Representative? <most important>
+
+Is the sample data representative of the population? Is it a random sample or, if it's an experiment, were the treatments randomly assigned to subjects or experimental units?
+
+If not, our statistic is likely biased and a poor estimate.
+
+Garbage in, garbage out
+
+#### 2) Data type?
+
+Is the variable of interest quantitative?
+
+If the variable isn't quantitative, we're using the wrong procedure!
+
+#### 3) Normality?
+
+Is the population of the variable of interest approximately normal?
+
+*Central Limit Theorem*: As the sample size increases, the sampling distribution of the sample mean (or differences in means) approaches a standard normal distribution.
+
+If the sample size is small and the variable is not normally distributed, t-procedures aren't as reliable (i.e., outliers and skew affects means and stdevs)
+
+### Q: Why should we not use a one-sample T-interval for this data?
+
+```{r}
+incomes <- c(1, 4, 6, 12, 13, 14, 18, 19, 20, 22, 23, 24, 26,
+31, 34, 37, 46, 47, 56, 61, 63, 65, 70, 97, 385)
+
+hist(incomes)
+boxplot(incomes, horizontal = TRUE)
+
+# Incomes from https://www.biostat.jhsph.edu/courses/bio623/misc/Boos%20and%20Stefanski%202010%20Efron's%20Bootstrap.pdf
+
+```
+
+#### 4) Independent Groups?
+
+Are the groups independent or dependent?
+
+#### 5) Sampling without replacement (the 10% Condition)? <least important>
+
+Is the population size "infinite"?
+
+If not, we would use the *finite population correction factor (FPCF)*.
+
+$$\frac{s_x}{\sqrt{n}}*\sqrt{\frac{N-n}{N-1}}$$
+
+What counts as "infinite"? The population should be more than 10 times the sample size.
+
+*Example 1*: The US population isn't infinite, but it is bigger than ten times a sample size of 50,000. (i.e., `Pop > 10*50,000 = 500,000`). No need for FPCF.
+
+*Example 2*: Randomly selecting 500 current students from the MSDS program. The total population is roughly 1500, which is not bigger than `10*500`. We should use the FPCF.
+
+Why is it least important?
+
+1.  Our populations are usually much larger than 10x's the sample size.
+2.  Our interval will likely be slightly wider if we don't use FPCF.
+
+### ---
+
+## Bootstrap T Confidence Interval
+
+t-intervals are not as accurate with skewed distributions, especially when the sample size is small; we need something else.
+
+We will estimate the actual distribution of the t-statistic by bootstrapping rather than just assuming that the t-statistics follow a t-distribution.
+
+What is "bootstrapping"? Why is it so popular?
+
+Parametric vs. Non-parametric
+
+More info [here](https://www.biostat.jhsph.edu/courses/bio623/misc/Boos%20and%20Stefanski%202010%20Efron's%20Bootstrap.pdf)
+
+### Thought process
+
+1)  Collect a bootstrap resample.
+
+2)  Calculate the bootstrap t-statistic with the formula:
+
+$$t_{boot} = \frac{\bar{x}_{boot} - \bar{x}}{\frac{s_{boot}}{\sqrt{n}}}$$
+
+Note we don't use $\mu$ in this formula!
+
+3)  Repeat a large number of times.
+
+4)  Find new bootstrapped quantiles $\hat{Q}$, instead of using `qt()`.
+
+5)  Use these new empirical quantiles to calculate the bootstrap confidence interval.
+
+### Example
+
+```{r}
+incomes <- c(1, 4, 6, 12, 13, 14, 18, 19, 20, 22, 23, 24, 26,
+31, 34, 37, 46, 47, 56, 61, 63, 65, 70, 97, 385)
+
+boxplot(incomes, horizontal = TRUE)
+hist(incomes)
+
+qqnorm(incomes, pch = 16)
+qqline(incomes, col = "red", lwd = 2)
+```
+
+We want to calculate a 95% bootstrap CI for mean income.
+
+#### Loop
+
+```{r}
+set.seed(100)
+
+xbar <- mean(incomes)               # Find the original sample mean
+
+N <- 10^4                           # number of t-boots
+n <- length(incomes)                # for sample size
+
+Tboots <- numeric(N)                # storage
+
+
+for (i in 1:N)
+ {
+   x <- sample(incomes, size = n, replace = T)
+   Tboots[i] <- (mean(x) - xbar) / (sd(x) / sqrt(n))
+ }
+
+ 
+Qhat <- quantile(Tboots, c(0.025, 0.975)) # empirical quantiles
+Qhat
+```
+
+```{r}
+# Compare t-distribution quantiles
+qt (p= c(.025, .975), df = n-1)
+
+# Note symmetry
+```
+
+#### Calculate the bootstrap confidence interval.
+
+$$
+(\bar{x} - \hat{Q}_2\frac{s}{\sqrt{n}}, \bar{x} - \hat{Q}_1\frac{s}{\sqrt{n}})
+$$
+
+Q-hat-1 is negative, Q-hat-2 is positive.
+
+```{r}
+# CI
+
+xbar - quantile(Tboots, c(0.975, 0.025)) * sd(incomes)/sqrt(n)
+```
+
+#### Compare with one-sample T interval
+
+```{r}
+t.test(incomes)$conf.int[1:2]
+```
+
+#### Summary Comparison
+
+| Type of Interval      | Endpoints     |
+|-----------------------|---------------|
+| Bootstrap CI          | (27.0, 127.3) |
+| One Sample T-interval | (17.1, 78.4)  |
+
+Comment: What's the advantage of the bootstrap CI?
+
+-   Assumption of normality & use of t-distribution
+
+-   Adjustment to address skew
+
+### ---
+
+## On Significance
+
+### P-values
+
+#### 1. P-values vs. Critical Regions (or "Rejection Regions")
+
+-   if the P-value is less than the alpha level (0.05), then reject null
+
+-   if the test statistic is more extreme than the critical value, then reject null
+
+#### 2. Caution with P-values
+
+[American Statistical Association (ASA) Statement on P-values](https://amstat.tandfonline.com/doi/full/10.1080/00031305.2016.1154108#.Vt2XIOaE2MN)
+
+| P-value               | Amount of Evidence for $H_a$ |
+|-----------------------|------------------------------|
+| Less than 0.01        | Very strong                  |
+| Between 0.01 and 0.05 | Strong                       |
+| Between 0.05 and 0.10 | Weak                         |
+| Greater than 0.10     | Insufficient                 |
+
+[P-values](https://xkcd.com/1478/)
+
+#### 3. Effect Size with CIs
+
+"We should promote and encourage the use of confidence intervals around sample statistics and effect sizes. This duty lies in the hands of statistics teachers, medical journal editors, reviewers and any granting agency." Tukur Dahiru
+
+[P-VALUE, A TRUE TEST OF STATISTICAL SIGNIFICANCE? A CAUTIONARY NOTE](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4111019/)
+
+#### 4. Think about study design, appropriateness of procedures, data itself, effect size
+
+P-value of 0.051 vs. 0.049
+
+### Statistical Significance vs. Practical Significance
+
+Statistical significance does not imply practical significance
+
+Example: weight loss drug
+
+### Lack of Significance
+
+If you do not reject the null, that doesn't make the null is true.
+
+Was study underpowered?
+
+### Searching for Significance
+
+A test on 20 subgroups with yield a significant result at least once with $\alpha = 0.05$ (1/20)
+
+"p-hacking"
+
+[Significant](https://xkcd.com/882/)
+
+------------------------------------------------------------------------
+
+This material is for enrolled students' academic use only and protected under U.S. Copyright Laws. This content must not be shared outside the confines of this course, in line with Eastern University's academic integrity policies. Unauthorized reproduction, distribution, or transmission of this material, including but not limited to posting on third-party platforms like GitHub, is strictly prohibited and may lead to disciplinary action. You may not alter or remove any copyright or other notice from copies of any content taken from Brightspace or Eastern University's website.
+
+© Copyright Notice 2024, Eastern University - All Rights Reserved

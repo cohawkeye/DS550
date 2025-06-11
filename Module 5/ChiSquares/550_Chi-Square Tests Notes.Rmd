@@ -1,0 +1,760 @@
+---
+title: "550_Chi-Square Tests"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## Chi-Square Tests
+
+For more detail, see LSR Ch 12
+[here](https://learningstatisticswithr.com/book/chisquare.html)
+
+OpenStaxStats Ch. 11
+[here](https://assets.openstax.org/oscms-prodcms/media/documents/IntroductoryStatistics-OP_i6tAI7e.pdf)
+
+## GOF Example: Birthdays
+
+In his book *Outliers*, Malcolm Gladwell suggests that a hockey player's
+birth month has a big influence on his chance to make it to the highest
+levels of the game. Specifically, since January 1 is the cutoff date for
+youth leagues in Canada (where many National Hockey League players come
+from), players born in January will be competing against players up to
+12 months younger. The older players tend to be bigger, stronger, and
+more coordinated and hence get more playing time and more coaching and
+have a better chance of being successful.
+
+To see if birth date is related to success (judged by whether a player
+makes it into the NHL), a random sample of 80 NHL players from a recent
+season was selected and their birthdays were recorded. Overall, 32 were
+born in the first quarter of the year, 20 in the second quarter, 16 in
+the third quarter, and 12 in the fourth quarter.
+
+Do these data provide convincing evidence that the birthdays of NHL
+players are not uniformly distributed throughout the year?
+
+### (a) What type of data is this? How many groups/samples were taken? Store as `observed`.
+
+```{r}
+observed <- c(32, 20, 16, 12)
+```
+
+### (b) Why can't we use any of the significance tests that we've learned so far? they are quantitative
+
+### (c) Is there some evidence that birthdays are not uniformly distributed?
+
+### (d) What are two statistical explanations (or models) for this evidence?
+
+1.  birthdays in the ngl are truly inuformly dist; our sample simply
+    gave us unequal numbers due to random chance.
+2.  Birthdays in the nhl are not uiformly dist.
+
+### (e) State the hypotheses that Malcolm would test.
+
+Null: Birthdays are unif dist
+
+Alternative: birthdays in the nhl are not uniformly dist.
+
+*Another option...*
+
+Null: p(q1) = p(q2)...where the p=.25 the prop of all nhl players born
+in that quarter.
+
+Alternative: at least one p does not equal the others.
+
+### (f) If birthdays are uniformly distributed, calculate the *expected count* $E_i$ for each of the possible outcomes. Store as `expected`.
+
+```{r}
+expected <- c(20, 20, 20, 20) #roughly
+# 80 * .25
+```
+
+### (g) There are three conditions to check for a chi-square test.
+
+$$\chi^2$$
+
+-   Is the data from a random sample or random assignment? we say yes
+
+-   Are all expected counts are greater than 5? yes
+
+-   Can the observations be considered independent (or check 10%
+    condition): not really, since we are smpling w/o replacement. as
+    long as the pop is large, it shouldn't change succss of finding
+
+-   10%(all nhl players ) \> 80
+
+Since the conditions are met, we will use a *chi-square goodness-of-fit
+test* ("GOF").
+
+### ------------------------------------------------------------------------
+
+### (h) Calculate the value of the chi-square test statistic manually.
+
+```{r}
+# Store observed
+observed <- c(32, 20, 16, 12)
+
+# Store expected
+expected <- c(20, 20, 20, 20)              # (sample size) * probability = 80*0.25 = 20
+
+# Find the "deviation" from expected
+observed - expected
+
+# Square to remove negatives
+(observed - expected)^2
+
+# Divide to find weighted contribution
+#
+(observed - expected)^2 / expected
+
+# Sum up to find the test statistic
+
+sum((observed - expected)^2 / expected)
+```
+
+Why "weighted" contributions?
+
++---------------+---------------+---------------+---------------+
+| Observed      | Expected      | $(O-E)^2$     | $\fra         |
+|               |               |               | c             |
+|               |               |               | {(O-E)^2}{E}$ |
++===============+===============+===============+===============+
+| 0             | 10            | 100           | 100/10 = 10   |
++---------------+---------------+---------------+---------------+
+| 990           | 1000          | 100           | 100/1000 =    |
+|               |               |               | 0.1           |
++---------------+---------------+---------------+---------------+
+
+$$\chi^2=\frac{(O_1-E_1)^2}{E_1} + \frac{(O_2-E_2)^2}{E_2} + \frac{(O_3-E_3)^2}{E_3} + \frac{(O_4-E_4)^2}{E_4}\\
+\chi^2=\Sigma\frac{(O_i-E_i)^2}{E_i} \\
+\chi^2=\Sigma\frac{(observed - expected)^2}{expected}$$
+
+If you like to see work written out...
+
+$$
+\chi^2=\frac{(32-20)^2}{20}+\frac{(20-20)^2}{20}+\frac{(16-20)^2}{20}+\frac{(12-20)^2}{20}=11.2
+$$
+
+### ------------------------------------------------------------------------
+
+### (i) For a chi-square GOF test, the degrees of freedom is number of categories minus 1: $df = k - 1$. (not sample size!)
+
+df = k - 1
+
+df = c - 1
+
+df = n - 1
+
+Our categories: Q1, Q2, Q3, Q4
+
+```{r}
+df <- 4 -1 
+
+```
+
+Visual of $\chi_3^2$
+
+```{r}
+# Set the degrees of freedom
+df <- 3
+
+# Generate random numbers from chi-square distribution
+chi_sq_data <- rchisq(1000, df)
+
+# Calculate density estimates
+density_est <- density(chi_sq_data)
+
+# Plot the density curve
+plot(density_est$x, 
+     density_est$y, 
+     main = "Chi-square Distribution (df = 3)", 
+     xlab = "Simulated Chi-Square Values", 
+     ylab = "Density", 
+     col = "white", 
+     ylim = c(0, 0.30), 
+     las = 1)
+
+# Add theoretical density curve
+curve(dchisq(x, df), add = TRUE, col = "blue", lwd = 2)
+
+# Hide values < 0 on distribution
+segments(-5, 0, 0, 0, col = "white", lwd = 2)
+```
+
+### (j) Use a chi-square table or `pchisq()` to find the P-value.
+
+If conditions are met (i.e., all $E_i \ge 5$), then the test statistic
+follows a chi-square distribution.
+
+[Tables](https://www.openintro.org/go/?id=stat_prob_tables_normal_t_chisq&referrer=/book/os/index.php)
+
+Prefixes: r, p, q, d
+
+```{r}
+#table gave p value bn .01 and .02
+pchisq(q = 11.2, df = 3, lower.tail = FALSE)
+```
+
+### (k) What does the P-value mean in this context? In other words, "interpret" the P-value.
+
+### ------------------------------------------------------------------------
+
+assuming nhl player birhdays are unif dist, ther is s a.0107 prob that
+we observe sample datae like we did or more ext just due to sampleing
+variable.
+
+assuming that nhl player birth are unif dist, there is a .0107 prob that
+we obs a test stat of 11.2 or more just due to sampling variablity.
+
+### (l) What conclusion would you make?
+
+1.  since p value = 0107 is less than alpha = .05
+2.  we reject null
+3.  we have convin evid that all nhl player birth are not uniform dist
+    across the quarters of the year. (for the season in question)
+
++------------+------------+------------+------------+------------+
+| Comparison | $H_0$      | $H_a$      | Sta        | Possible   |
+|            |            |            | tistically | Error?     |
+|            |            |            | Si         |            |
+|            |            |            | gnificant? |            |
++============+============+============+============+============+
+| `P-valu    | Reject     | Find       | yes        | Type I     |
+| e < alpha` | $H_0$      | convincing |            |            |
+|            |            | evidence   |            |            |
+|            |            | for $H_a$  |            |            |
++------------+------------+------------+------------+------------+
+| `P-valu    | Do not     | Do not     | no         | Type II    |
+| e > alpha` | reject     | find       |            |            |
+|            | $H_0$      | convincing |            |            |
+|            |            | evidence   |            |            |
+|            | "fail to   | for $H_a$  |            |            |
+|            | reject"    |            |            |            |
++------------+------------+------------+------------+------------+
+
+Remember, the random sample gave us "some" evidence (initial,
+preliminary) that birthdays were not uniformly distributed, this low
+P-value tells us that this data is unlikely to have occurred simply by
+chance.
+
+### (m) Use the `goodnessOfFit()` function in the `lsr` package to find the chi-square test statistic and P-value.
+
+```{r}
+# Install & load the lsr package
+
+#install.packages("lsr")
+library(lsr)
+
+#lsr::goodnessOfFitTest
+```
+
+What are the problems here?
+
+```{r}
+goodnessOfFitTest(x = as.factor(observed), p = c(.25, 25, .25, .25))
+
+```
+
+We have to use the table of **counts** to create what the **data** may
+look like.
+
+```{r}
+nhl_as_data <- c(rep(as.factor("Q1"), 32), 
+                 rep(as.factor("Q2"), 20), 
+                 rep(as.factor("Q3"), 16), 
+                 rep(as.factor("Q4"), 12)
+)
+
+lsr::goodnessOfFitTest(x = nhl_as_data, p = c(.25, .25, .25, .25))
+```
+
+### (n) Give a brief report of findings.
+
+For more detail on what should be included, see
+[here](https://learningstatisticswithr.com/book/chisquare.html#chisqreport).
+
+Of the 80 NHL players randomly selected for this study, 32 were born in
+the first quarter of the year, 20 in the second quarter, 16 in the third
+quarter, and 12 in the fourth quarter. A chi-square goodness of fit test
+was conducted to test whether birthdays of NHL players are not uniformly
+distributed throughout the year.
+
+The results were significant $\chi^2(3)$ = 11.2, $p < 0.05$ , suggesting
+that birthdays of NHL players are *not uniformly distributed* throughout
+the year.
+
+A much larger than expected number of players were born in the first
+quarter.
+
+### ------------------------------------------------------------------------
+
+## GOF Example: Racial Stereotypes
+
+The authors of the paper *Racial Stereotypes in Children's Television
+Commercials* (*Journal of Advertising Research*) counted the number of
+times that characters of different ethnicities appeared in commercials
+aired on Philadelphia TV stations, results in the data in the table
+below. [SDA5e, 633]
+
+| Ethnicity | African-American | Asian | Caucasian | Hispanic | Total |
+|-----------|------------------|-------|-----------|----------|-------|
+| Frequency | 57               | 11    | 330       | 6        | 404   |
+
+The table below shows the proportion of the US population falling into
+each of these four ethnic groups, based on the Census around the time of
+the commercials.
+
+| Ethnicity         | African-American | Asian | Caucasian | Hispanic |
+|-------------------|------------------|-------|-----------|----------|
+| Census Proportion | 0.177            | 0.032 | 0.734     | 0.057    |
+
+Do the data provide sufficient evidence to conclude that the proportions
+appearing in commercials are not the same as the census proportions?
+Test the relevant hypotheses using a significance level of 0.01.
+
+```{r}
+# Store observed counts
+observed <- c(57, 11, 330, 6)
+
+# Store null probabilities
+nullprobs <- c (0.177, .032, .734, .057)
+
+# Store sample size
+commercial_n <- sum(observed)
+
+# Calculate the expected counts
+comm_expected <- commercial_n * nullprobs
+
+```
+
+### (a) What hypotheses are we testing?
+
+H0 - propo apperaing in comm are the same as the censu prop
+
+Ha - the prop appearing in commer are not the same as the censu prop.
+
+### (b) Check the conditions
+
+1.  it's unclear if this data comes from a random sample of all
+    comercials airing in phil. we should be cautious about general to
+    the pop.
+2.  all expected counts (71.5, 12.9, 296.5, 23)
+3.  we assume there are more than 4040 char in the pop.
+
+### (c) Calculate $\chi^2$ test statistic and P-value.
+
+Hint: Check the documentation of `?lsr::goodnessOfFitTest` on how to
+deal with using probabilities that aren't all equally likely (i.e.
+uniformly distributed).
+
+```{r}
+#
+#sum((observed - expected)^2 / expected)
+sum((observed - comm_expected)^2 / comm_expected)
+#?lsr::goodnessOfFitTest
+comm_data <- c(rep("African Americans", 57),
+               rep("Asian", 11),
+               rep("Caucasian", 330),
+               rep("Hispanic", 6))
+
+goodnessOfFitTest(x = as.factor(comm_data), p = nullprobs)
+```
+
+```{r}
+# Calculate the exact P-value
+
+pchisq(q = 19.599, df = 3, lower.tail = FALSE)
+```
+
+### (d) Interpret the P-value in context.
+
+assum the prop of ethn in comm airing in phil equal to the corresp
+census prop there's is a .0002 prob that we would obser a stat of 19.599
+just due to sampling variabli
+
+### (e) Conclude the test.
+
+1.  since .0002 \< .01
+2.  we reject the null
+3.   we find convin evid that the prop of ethn appearing in comm in the
+    phil aared during this time span.
+
+### (f) Which ethnicity made the biggest contribution to the chi-squared test statistic?
+
+```{r}
+
+#
+(observed - comm_expected)^2 / comm_expected
+
+#hisp eth made the biggest cont to the chi square (12.59) thre were way fewer hisp charac in comm than expected (0 =6, e = 23)
+```
+
+### Manual calculation and visualization
+
+$$
+\chi^2=\frac{(57-71.508)^2}{71.508}+\frac{(11-12.928)^2}{12.928}+\frac{(330-296.536)^2}{296.536}+\frac{(6-23.028)^2}{23.028}
+$$
+
+```{r}
+# Set the degrees of freedom
+df <- 3
+
+# Generate random numbers from chi-square distribution
+chi_sq_data <- rchisq(1000, df)
+
+# Calculate density estimates
+density_est <- density(chi_sq_data)
+
+# Plot the density curve
+plot(density_est$x, 
+     density_est$y, 
+     main = "Chi-square Distribution (df = 3)", 
+     xlab = "Simulated Chi-Square Values", 
+     ylab = "Density", 
+     col = "white", 
+     ylim = c(0, 0.30), 
+     las = 1)
+
+# Add theoretical density curve
+curve(dchisq(x, df), add = TRUE, col = "red", lwd = 2)
+
+# Hide values < 0 on distribution
+segments(-5, 0, 0, 0, col = "white", lwd = 2)
+```
+
+### ------------------------------------------------------------------------
+
+## Introducing Chi-Square Tests with Two-Way Tables
+
+GOF Example 1:
+
+| Birth Date | Q1  | Q2  | Q3  | Q4  | Total |
+|------------|-----|-----|-----|-----|-------|
+| Frequency  | 32  | 20  | 16  | 12  | 80    |
+
+GOF Example 2:
+
+| Ethnicity | African-American | Asian | Caucasian | Hispanic | Total |
+|-----------|------------------|-------|-----------|----------|-------|
+| Frequency | 57               | 11    | 330       | 6        | 404   |
+
+: \
+"One-Way" Tables
+
+What type of data? How many groups?
+
+Two Types
+
+1.  **Test for Homogeneity (TOH)**
+
+-   Does this categorical variable have the same distribution across
+    these different populations (or treatment groups)?
+
+2.  **Test for Association (TOA)**
+
+-   Aka, Test for Independence (TOI)
+-   Are these two categorical variables associated or are they
+    independent of each other in this one population?
+
+Some courses and textbooks don't make a big deal about this difference!
+
++-------------------------+--------------------+----------------------+
+| Type of Test            | Number of Groups   | Number of            |
+|                         | or Populations     | Categorical          |
+|                         |                    | Variables            |
++=========================+====================+======================+
+| Chi-Square              | 1                  | 1                    |
+| Goodness-of-Fit Test    |                    |                      |
++-------------------------+--------------------+----------------------+
+| Chi-Square Test of      | 2+                 | 2                    |
+| Homogeneity             |                    |                      |
++-------------------------+--------------------+----------------------+
+| Chi-Square Test of      | 1                  | 2                    |
+| Association (or         |                    |                      |
+| Independence)           |                    |                      |
++-------------------------+--------------------+----------------------+
+
+What's different? Hypotheses; DF formula; expected counts formula
+
+What's the same? Test statistic formula; chi-square distribution; find
+the P-value; concluding
+
+## ------------------------------------------------------------------------
+
+## Example: Anger and Heart Disease
+
+(from TPS7, 776-77)
+
+Are people who are prone to sudden anger more likely to develop heart
+disease? A prospective observational study followed a random sample of
+8,474 people with normal blood pressure for about 4 years. All the
+individuals were free of heart disease at the beginning of the study.
+Each person took the Spielberger Trait Anger Scale Test, which measures
+how prone a person is to sudden anger. The researchers then categorized
+each person's anger level as Low, Moderate, or High based on their test
+score. They also recorded whether each individual developed coronary
+heart disease. This classification includes people who had heart attacks
+and those who needed medical treatment for heart disease. The two-way
+table summarizes the results of the study.
+
+|             | Low  | Moderate | High | Total |
+|-------------|------|----------|------|-------|
+| **Yes CHD** | 53   | 110      | 27   | 190   |
+| **No CHD**  | 3057 | 4621     | 606  | 8284  |
+| **Total**   | 3110 | 4731     | 633  | 8474  |
+
+Do the data provide convincing evidence at the $\alpha = 0.10%$ level of
+an association between anger level and heart disease status for people
+with normal blood pressure?
+
+### (a) What is a "prospective" observational study? Why use an observational study and not a randomized experiment?
+
+### (b) What is the explanatory variable and what is the response variable?
+
+### (c) What type of significance test would be appropriate here?
+
+### (d) Input the data into a matrix.
+
+```{r}
+# Input the counts (but not the totals!)
+anger_counts <- c(53, 110, 27, 3057, 4621, 606)
+
+# Create the matrix
+#chd_anger_table <- matrix(anger_counts, nrow = 2, ncol = 3, byrow = TRUE)
+
+# Name rows and columns
+#rownames(chd_anger_table) <- c("Yes CHD", "No CHD")
+#colnames(chd_anger_table) <- c("Low", "Moderate", "High")
+
+# Show the table
+print(chd_anger_table)
+
+```
+
+```{r}
+# Alternate approach: bind values by row
+
+data_by_rows <- rbind(c(53, 110, 27), c(3057, 4621, 606))
+
+#rownames(data_by_rows) <- c("Yes CHD", "No CHD")
+#colnames(data_by_rows) <- c("Low", "Moderate", "High")
+
+data_by_rows
+```
+
+### (e) Calculate the conditional distribution of CHD event by anger level.
+
+```{r}
+proportions(chd_anger_table, margin = 2)
+
+#round(proportions(chd_anger_table, margin = 2), 3)*100
+```
+
+### (f) Does the conditional distribution give *some* evidence of an association?
+
+### (g) What are two explanations (or models) for this difference in proportions?
+
+### (h) What are the hypotheses?
+
+### (i) Find the expected count for the "yes" and "low" cell, i.e., $E_{1, 1}$.
+
+```{r}
+# Create table with totals (be careful not to run this table in chi-square test!)
+data_with_totals <- rbind(c(53, 110, 27, 190), 
+                          c(3057, 4621, 606, 8284), 
+                          c(3110, 4731, 633, 8474)
+                          )
+
+rownames(data_with_totals) <- c("Yes CHD", "No CHD", "Total")
+colnames(data_with_totals) <- c("Low", "Moderate", "High", "Total")
+
+data_with_totals 
+
+# Calculate the expected count in row 1, column 1
+
+
+```
+
+$$
+\mbox{Expected count} = \frac{R_i*C_j}{n}
+$$
+
+### (j) Use the chisq.test() function to calculate the chi-square test statistic. Check conditions.
+
+```{r}
+# chisq.test()
+
+
+#chisq.test()$expected
+
+
+# Conditions
+
+
+```
+
+You could also use **lsr::associationTest()**
+
+For more info, see
+[LSR](https://learningstatisticswithr.com/book/chisquare.html#AssocTestInR)
+
+### (k) Calculate the degrees of freedom.
+
+DF for GOF: df = categories - 1
+
+DF for Two-Way = (Rows - 1) \* (Columns - 1)
+
+```{r}
+
+```
+
+### (l) Calculate and interpret the P-value in context.
+
+```{r}
+
+```
+
+Interpretation:
+
+### (m) Conclude the test in context.
+
+### (n) What type of error -- Type I or Type II -- might we have made? Describe it in context and give a consequence.
+
+Type:
+
+Describe:
+
+Consequence:
+
+### ------------------------------------------------------------------------
+
+## Chi-Square with Raw Data (not tables of counts)
+
+Data from *Intro to Modern Statistics*, 1st ed., p. 340
+
+### Load package:
+
+```{r}
+#install.packages("openintro")
+#library(openintro)
+```
+
+### See the experimental data:
+
+```{r}
+openintro::diabetes2
+
+```
+
+### Learn about the data set...
+
+```{r}
+?diabetes2
+```
+
+### From data to a table
+
+```{r}
+table(diabetes2)
+```
+
+### Run the test
+
+```{r}
+chisq.test(table(diabetes2))
+
+```
+
+### More analysis
+
+```{r}
+#chisq.test(table(diabetes2))$observed
+
+#chisq.test(table(diabetes2))$expected
+
+#chisq.test(table(diabetes2))$residuals #Pearson residual
+```
+
+$$
+Residual = \frac{O-E}{\sqrt{E}}
+$$
+
+### Another approach:
+
+```{r}
+xtabs(formula = ~ treatment + outcome, data = diabetes2)
+
+# See https://learningstatisticswithr.com/book/chisquare.html#AssocTestInR
+```
+
+```{r}
+#install.packages("lsr")
+#library(lsr)
+
+lsr::associationTest( ~ treatment + outcome, diabetes2) #error
+
+# Note the function needs a dataframe (not a tibble)
+```
+
+For more on continuity correction and Cramer's v, see
+[LSR](https://learningstatisticswithr.com/book/chisquare.html#yates)
+
+### ------------------------------------------------------------------------
+
+## RECAP of Chi-Square Tests
+
++-----------+-----------+-----------+-----------+-----------------+
+| Type of   | Number of | Number of | Expected  | Degrees of      |
+| Test      | Groups or | Ca        | Count     | Freedom         |
+|           | P         | tegorical |           |                 |
+|           | o         | Variables |           |                 |
+|           | pulations | under     |           |                 |
+|           |           | Inve      |           |                 |
+|           |           | stigation |           |                 |
++===========+===========+===========+===========+=================+
+| C         | 1         | 1         | $E        | $df = k - 1$    |
+| hi-Square |           |           | = n *p_i$ |                 |
+| Goo       |           |           |           |                 |
+| dne       |           |           |           |                 |
+| ss-of-Fit |           |           |           |                 |
+| (GOF)     |           |           |           |                 |
+| Test      |           |           |           |                 |
++-----------+-----------+-----------+-----------+-----------------+
+| C         | 2+        | 2         | $E =      | $df =           |
+| hi-Square |           |           | \frac{R_i |  ( R - 1)(C-1)$ |
+| Test of   |           |           |  * C      |                 |
+| Ho        |           |           |  _i }{n}$ |                 |
+| mogeneity |           |           |           |                 |
+| (TOH)     |           |           |           |                 |
++-----------+-----------+-----------+-----------+-----------------+
+| C         | 1         | 2         | $E =      | $df =           |
+| hi-Square |           |           | \f        |  ( R - 1)(C-1)$ |
+| Test of   |           |           | rac{R_i * |                 |
+| As        |           |           |  C_i}{n}$ |                 |
+| sociation |           |           |           |                 |
+| (or In    |           |           |           |                 |
+| dep       |           |           |           |                 |
+| endence): |           |           |           |                 |
+| (TOI/TOA) |           |           |           |                 |
++-----------+-----------+-----------+-----------+-----------------+
+
+All use the same
+formula:$$\chi^2=\Sigma\frac{(observed - expected)^2}{expected} \\
+\chi^2=\Sigma\frac{(O-E)^2}{E}$$
+
+Interested to go farther? See
+[here](http://www.sthda.com/english/wiki/chi-square-test-of-independence-in-r).
+
+### ------------------------------------------------------------------------
+
+This material is for enrolled students' academic use only and protected
+under U.S. Copyright Laws. This content must not be shared outside the
+confines of this course, in line with Eastern University's academic
+integrity policies. Unauthorized reproduction, distribution, or
+transmission of this material, including but not limited to posting on
+third-party platforms like GitHub, is strictly prohibited and may lead
+to disciplinary action. You may not alter or remove any copyright or
+other notice from copies of any content taken from BrightSpace or
+Eastern University's website. © Copyright Notice 2024, Eastern
+University - All Rights Reserved

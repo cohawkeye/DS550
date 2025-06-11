@@ -1,0 +1,50 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*.
+
+```{r}
+#group <- c(1, 1, 1, 1, 2, 2, 2, 3, 3, 3)
+#group <- as.factor(group)
+
+#weightloss <- c(7, 9, 5, 7, 9, 11, 7, 15, 12, 18)
+
+group<- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3)
+group <- as.factor(group)
+test <- c(4, 9, 1, 2, 3, 2, 5, 7, 2, 9, 8, 9)
+```
+
+```{#summary(aov(weightloss ~ group))}
+summary(aov(test ~ group))
+```
+
+```{r}
+summary(aov(test ~ group))
+```
+
+```{r}
+#pf(11.735, 
+#   df1 = 2, #df(groups) or #df(numerator)
+#   df2 = 7, #df(error) or #df(denominator)
+ #  lower.tail = FALSE
+
+pf(1.15,
+   df1 = 2,
+   df2 = 9,
+   lower.tail = FALSE
+   )
+
+```
+
+```{r}
+pf(1.15,
+   df1 = 2,
+   df2 = 9,
+   lower.tail = FALSE
+   )
+
+```

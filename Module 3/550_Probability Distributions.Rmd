@@ -1,0 +1,1196 @@
+---
+title: "550_Probability Distributions"
+output: pdf
+author: "Jeff Eicher, Jr., Eastern University (c)2023"
+---
+
+# VIDEO: Random Variables: Discrete vs. Continuous
+
+Start with a known model of the world, and we use that model to do some calculations
+
+### What is a "distribution"?
+
+The *distribution* of a variable tells us what values the variable takes and how often it takes these values.
+
+The most famous distribution:
+
+```{r}
+IQs <- rnorm(1000, mean = 100, sd = 15)
+
+hist(IQs, 
+  main = "Adult IQ scores are normally distributed", 
+  ylab = "Count",
+  xlab = "IQ", 
+  las = 1)
+```
+
+```{r}
+curve(dnorm(x, 
+            mean = 100, 
+            sd = 15), 
+      from = 55, 
+      to = 145, 
+  main = "Density Curve of Adult IQ Scores", 
+  ylab = "",
+  xlab = "IQ")
+```
+
+A *random variable* (RV) is a numerical value whose value depends on the outcome of a chance experiment.
+
+Let S be the sample space for tossing a coin twice.
+
+```         
+S = {(head, head), (head, tail), (tail, head), (tail, tail)}
+```
+
+Let the random variable T = the number of tails occurring in two tosses.
+
+T is a random variable since it has numerical values (0, 1, 2) and it is based on a random process (coin flip)
+
+### Discrete RV
+
+-   its possible values are isolated points along the number line
+
+-   number of items purchased, number of gas pumps in use, number of broken eggs in a carton, number of customers on your website
+
+-   counting
+
+-   histogram
+
+### Continuous RV
+
+-   its possible values are *all* points in some interval
+
+-   temperature in a freezer, weight of a pineapple, amount of time spent on a website
+
+-   measuring
+
+-   *Density Curve* - smooth curve to approximate histogram where the area bounded by curve and x-axis is 1 (100%)
+
+### Some Probability Distributions
+
+Discrete distributions: Uniform, Binomial, Geometric, Poisson
+
+Continuous distributions: Uniform, Normal, Student's T, Chi-Square, F
+
+Every probability distribution in R comes with 4 function prefixes: `r`, `d`, `p`, and `q`.
+
+-   r = take a random sample from the distribution
+
+-   d = find the probability (density) at one exact value
+
+-   p = find the probability of at most a value (q)
+
+-   q = find a value given a certain percentile (p)
+
+We'll see lots of examples of these going forward!
+
+------------------------------------------------------------------------
+
+# VIDEO: Uniform Distribution
+
+## Discrete Uniform
+
+Suppose we want a random sample from our customer base; we'd use a discrete uniform distribution: discrete because the values we want are natural numbers (1, 2, 3, ...) and uniform because each number is equally likely to be selected.
+
+Suppose we number each of our 10,000 customers with a unique ID and want to randomly select 10% (1,000) of them for a survey.
+
+```{r}
+ids <- seq(10001, 20000, by = 1)
+
+head(ids, 100) # just look at first 100 IDs
+```
+
+Sample 1,000 customer IDs:
+
+```{r}
+head(
+  sample(ids, size = 1000, replace = FALSE), 
+  25)
+
+# What if replace = TRUE?
+```
+
+This histogram shows an approximate discrete uniform distribution
+
+```{r}
+hist(sample(ids, size = 1000, replace = FALSE), xlab = "ID", main = "Discrete Uniform")
+```
+
+Shape: Roughly symmetric, no peaks
+
+## Continuous Uniform
+
+Any value on an interval on the real number line (i.e. decimals)
+
+Note the prefix "r" with unif()
+
+```{r}
+# Random sample of 10 from a uniform distribution from 8 to 12
+
+runif(n = 10, min = 8, max = 12)                 # same as runif(10, 8, 12)
+
+#round(runif(10, min = 18, max = 55), 2)
+```
+
+We use *discrete uniform* when we take simple random samples from a population or to model events that are equally likely (die-rolling)
+
+One use of a *continuous uniform* distribution in Bayesian statistics is as an "uninformative prior".
+
+------------------------------------------------------------------------
+
+# VIDEO: Binomial Probabilities
+
+For more info, see the LSR textbook [here](https://learningstatisticswithr.com/book/probability.html#binomial)
+
+Suppose Greg's is an online specialty clothing company. They frequently send out emails to its customers with a link that takes the customer directly to a web page for the discounted item. The exact number of customers who will click the link is unknown, but from previous data, Greg's estimates the probability to be 0.15. Greg is interested in the number of customers who click the link in a random sample of 10 customer emails.
+
+## Notation
+
+The probability of success is $p$ (or $\theta$ or $\pi$)
+
+The sample size is n (or N).
+
+The number of successes is X (or $r$ or $k$).
+
+## Conditions
+
+1.  Binary variable: "binomial" (two names: success and failure); discrete
+
+2.  Independent Events
+
+We can ignore lack of independence if the population is large compared to the sample size
+
+-   a.k.a., the 10% condition: $N \ge 10*n$ or $n \le \frac{1}{10}*N$
+
+3.  Fixed Number of Trials (n)
+
+4.  Same probability of success: p (or $\pi$ or $\theta$) is constant from trial to trial
+
+## Simulate one set of 10 emails
+
+```{r}
+rbinom(n = 1, size = 10, prob = 0.15)             # same as rbinom(1, 10, 0.1)
+```
+
+## Calculate a binomial probability of 3 customers use link of 10, given 15% response rate
+
+```{r}
+round(
+  dbinom(3, size = 10, prob = 0.15), 
+  3)
+
+##d for density
+```
+
+How did R calculate that?
+
+### Binomial Theorem
+
+$$
+P(r | n, p) ={} _nC_r(p)^r(1-p)^{n-r}
+$$
+
+The LSR textbook gives this form of the equation:
+
+$$
+P(X | N, \theta) ={} _NC_X(\theta)^X(1-\theta)^{N-X}
+$$ where C is a math operation known as a "combination"
+
+Using our context, the left side of this equation would be
+
+$$
+P(\mbox{3 coupons} | \mbox{10 emails}, \mbox{0.15 probability})
+$$
+
+Or, symbolically: $$
+P(X = 3 | n = 10, \theta = 0.15)
+$$
+
+$$
+_{10}C_3(0.15)^3(1-0.15)^{10-3}
+$$
+
+### Calculate each possible number of successes
+
+```{r}
+round(
+  dbinom(c(0:10), # Calculate the probability for 0 up to 10 successes
+         size = 10, 
+         prob = 0.15), 
+      3)
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: Binomial Distribution
+
+### Visualize a binomial distribution
+
+A binomial distribution is based on two parameters, the size parameter n and the success probability p ($\theta$ or $\pi$)
+
+$X \sim B(n = 10, p = 0.15)$ or just $X \sim B(10, 0.15)$
+
+```{r}
+# Generate all possible number of successes (when n = 10)
+success <- 0:10
+
+# Plot all possible number of successes (when n = 10)
+plot(success, 
+     dbinom(success, 
+            size = 10, 
+            prob = 0.15), 
+     type = 'h',
+     lwd = 4,
+     las = 1,
+     xlab = "Number of Customers who Use Link", 
+     ylab = "Probability")
+
+```
+
+### Calculate the probability of a range of values
+
+We use `pbinom` to calculate the probability of at most X successes.
+
+Calculate the probability that *at most 3* will use the coupon.
+
+"At most three" is 0, 1, 2, or 3.
+
+```{r}
+pbinom(q = 3, size = 10, prob = 0.15, lower.tail = TRUE)
+```
+
+### Calculating a probability for at least X successes
+
+What is the probability that at least 4 customers use the link out of 10 customers?
+
+"At least 4" is 4, 5, 6, 7, 8, 9, 10
+
+#### 1. With simulation
+
+Let's generate 100 different trials where the sample size is 10 and the probability of success is 0.15 (15%). How often does 4 or more occur in the simulation?
+
+```{r}
+set.seed(123) # for reproducibility
+
+bin_simul <- rbinom(n = 100, size = 10, prob = 0.15)
+
+bin_simul
+```
+
+```{r}
+stripchart(bin_simul, 
+           method = "stack", 
+           las = 1, 
+           pch = 16, 
+           cex = 0.75, 
+           ylim = c(0, 50), 
+           xlim = c(0, 10), 
+           xlab = "Number of Successes", 
+           ylab = "Frequency", 
+           main = "Simulation vs. Observed")
+abline(v = 4, col="red", lwd = 2)
+```
+
+Therefore, we will estimate the probability as...
+
+To get a better estimate, we should increase the number of trials (e.g, from 100 to 10,000); recall *the law of large numbers*.
+
+#### 2. Using dbinom() repeatedly
+
+```{r}
+dbinom(c(4:10), size = 10, prob = 0.15)
+
+cat("\n The sum is", sum(dbinom(c(4:10), size = 10, prob = 0.15)))
+```
+
+#### 3. Using the complement with pbinom()
+
+P(at least 4 successes) = 1 - P(at most 3 successes)
+
+```{r}
+1 - pbinom(q = 3, size = 10, prob = 0.15, lower.tail = TRUE)
+```
+
+#### 4. Using lower.tail = FALSE
+
+The `lower.tail = FALSE` provides a quick way to find the complement, but note we should not use `q = 4`.
+
+```{r}
+pbinom(q = 3, size = 10, prob = 0.15, lower.tail = FALSE)
+```
+
+### What number of links clicked is at the 50th percentile?
+
+The `q` prefix is used on the distribution name to calculate boundaries when given percentiles
+
+```{r}
+qbinom(p = 0.50, size = 10, prob = 0.15, lower.tail = TRUE)
+```
+
+### Objectives with binomial
+
+Identify when a situation is "binomial"
+
+Know what a binomial distribution is
+
+Know when to use each of the commands below ("the four prefixes"):
+
+`rbinom`
+
+`dbinom`
+
+`pbinom`
+
+`qbinom`
+
+------------------------------------------------------------------------
+
+# VIDEO: Geometric
+
+The geometric distribution models a number of failures until a first success.
+
+Suppose you roll two, fair, six-sided dice. What's the probability that your first set of "snake eyes" (a 1 and a 1) occurs on your 10th try?
+
+$$P(1 \cap 1) = P(1)*P(1) = \frac{1}{6}*\frac{1}{6}=\frac{1}{36}$$
+
+```{r}
+rgeom(n = 1, prob = 1/36)
+```
+
+```{r}
+simul.geom <- rgeom(n = 1000, prob = 1/36)
+
+hist(simul.geom, xlab = "Number of Rolls Until First Success (Snake Eyes)", las = 1)
+```
+
+## Conditions
+
+Binary
+
+Independence
+
+1st Success on Trial
+
+Success Probability Stays the Same from Trial to Trial
+
+## Facts about Geometric Distributions
+
+-   Discrete with $X \ge 1$
+
+-   Based on one parameter: p (the probability of success)
+
+-   Right Skewed
+
+-   The mean is $\mu = \frac{1}{p}$
+
+## Example: Craps
+
+A craps player rolls two six-sided dice 30 straight times before his first 7 (i.e., the sum of two six-sided dice is 7).
+
+What is the probability it would take 30 or more rolls before rolling a 7? Should the player be surprised at this result?
+
+There are six ways to roll a sum of 7: {(1, 6), (2, 5), (3, 4), (4, 3), (5, 2), (6, 1)}
+
+$$P(\mbox{sum of 7}) = \frac{6}{36}=\frac{1}{6}$$
+
+### With simulation
+
+```{r}
+set.seed(123)
+geom_simul <- rgeom(200, prob = 1/6) + 1 # to ensure X >= 1
+geom_simul
+```
+
+```{r}
+stripchart(geom_simul, 
+           method = "stack", 
+           las = 1, 
+           pch = 16, 
+           cex = 1, 
+           ylim = c(0, 100), 
+           xlim = c(0, 35), 
+           xlab = "Number of Trials until First Success", 
+           ylab = "Frequency", 
+           main = "Simulation vs. Observed")
+abline(v = 30, col="red", lwd = 2)
+```
+
+### With a probability function: pgeom()
+
+...27, 28, 29, 30, 31, 32, ...
+
+```{r}
+pgeom(q = 29, prob = 1/6, lower.tail = FALSE)
+
+```
+
+Four Prefixes: rgeom(), dgeom(), pgeom(), qgeom()
+
+Formula I use $X \ge 1$
+
+$$
+P(X = k) = p(1-p)^{k-1}
+$$
+
+Formula R uses, for $X \ge 0$ (why I need to add 1):
+
+$$
+P(X = k) = p(1-p)^{k}
+$$
+
+R defines the geometric random variable X as "the number of *failures* before the first success occurs" whereas I define X as the "number of *successes* before the first success occurs"
+
+------------------------------------------------------------------------
+
+# VIDEO: Poisson Distribution
+
+Discrete random variable useful in estimating the number of occurrences of an event over a specified interval of time or space:
+
+-   number of patients arriving at a hospital in 1 hour
+
+-   number of computer-server failures in a month
+
+-   number of leaks in 100 miles of a pipeline
+
+## Assumptions
+
+1.  The probability of an occurrence is the same for any two intervals (of time or space) of equal length
+
+2.  The occurrence or nonoccurrence in any interval (of time or space) is independent of the occurrence or nonoccurrence in any other interval
+
+## Formula for Poisson
+
+The probability of X occurrences in an interval is given by
+
+$$
+P(x) = \frac{\mu^xe^{-\mu}}{x!}
+$$ where...
+
+$\mu$ is the expected value or mean number of occurrences in an interval, aka, `lambda` $\lambda$
+
+$e$ is the natural base 2.71828...
+
+$x!$ has the mathematical operation "factorial"; e.g. $5! = 5*4*3*2*1$
+
+## Example
+
+Suppose we are interested in the number of patients who arrive at an emergency room of a large hospital during a 15-minute period on weekday mornings.
+
+```         
+-- Staffing decisions
+
+-- Possible wait times
+```
+
+1.  Assume probability of patient arriving is the same for any two periods of equal length during this 15-minute period
+
+2.  Assume arrival or non-arrival of a patient in any 15-minute period is independent of arrival or non-arrival of a patient in other 15-minute period
+
+Since assumptions are satisfied, we can use Poisson distribution to model this scenario.
+
+Historical data shows the average number of patients arriving during a 15-minute period is 10.
+
+## Question:
+
+What is the probability of exactly five arrivals during 15 minutes?
+
+```{r}
+# Simulate random arrivals in 15-minute interval
+rpois(n = 1, lambda = 10)
+
+# same as rpois(1, 10)
+```
+
+```{r}
+# Simulate random arrivals during 8 independent 15-minute intervals
+rpois(n = 8, lambda = 10)
+
+# same as rpois(1, 10)
+```
+
+What is the probability of exactly five arrivals during 15 minutes?
+
+```{r}
+# "exactly" 5 => Use 'd' prefix
+
+dpois(x = 5, lambda = 10)
+
+# same: dpois(5, 10)
+```
+
+$$
+P(x = 5) = \frac{10^5e^{-10}}{5!} = 0.03783327
+$$
+
+For poisson distributions, the mean and the variance are always equal!
+
+$$
+\lambda = \mu = 10 = \sigma^2
+$$
+
+Find the probability that there are *at most 5 arrivals* at this hospital over a *3-minute* period. Should hospital administrators be surprised if there are 5 or fewer in a 3-minute period?
+
+$$
+\mu_{new} = \frac{10}{15} * 3 = 2
+$$
+
+```{r}
+ppois(q = 5, lambda = 2, lower.tail = TRUE)
+```
+
+98.3% is very likely; the hospital should **not** be surprised that 5 or fewer show up in a 3-minute period.
+
+On the other hand, if more than 5 showed up in a 3-minute period (like 6, 7, 8, etc.), that only occurs 100 - 98.3 = 1.7% of the time, which would surprising.
+
+But, on the other hand, there are many 3-minute periods in one 24-hour day (i.e., 480), so 1.7% of 480 is 8.2. We expect roughly 8 times per day the hospital will have more than 5 show up in any 3-minute period.
+
+## Visualize a Poisson Distribution
+
+Find each respective probability for "at most 5" arrivals in a 3-minute period.
+
+```{r}
+round(dpois(x = c(0:5), lambda = 2), 3)
+```
+
+```{r}
+# Generate all possible number of successes (0 to 40)
+successPois <- 0:40
+
+# Plot all possible number of successes (when mu = 2)
+plot(successPois, 
+     dpois(successPois, 
+            lambda = 2), 
+     type = 'h',
+     lwd = 4,
+     las = 1,
+     xlab = "Number of Arrivals in 3-Minute Interval", 
+     ylab = "Probability")
+```
+
+## Percentiles & Poisson
+
+What is the 10th percentile of number of arrivals at this hospital during a 3-minute period?
+
+```{r}
+qpois(p = 0.10, lambda = 2, lower.tail = TRUE)
+```
+
+## Objectives with poisson
+
+Identify when a situation is "poisson" (the assumptions)
+
+Know what a poisson distribution is
+
+Know when to use each of the commands below ("the four prefixes"):
+
+`rpois`
+
+`dpois`
+
+`ppois`
+
+`qpois`
+
+------------------------------------------------------------------------
+
+# VIDEO: Normal Distribution
+
+For more info, see the LSR textbook [here](https://learningstatisticswithr.com/book/probability.html#normal)
+
+Continuous random variable (not discrete), aka Gaussian distribution (Karl Gauss)
+
+Mount-shaped, unimodal, symmetric, bell-shaped (the "bell curve")
+
+mean = median = mode
+
+Heights, weights, measurement errors, test scores, amounts of rainfall, etc.
+
+Confidence intervals and most significance tests rely on the sampling distribution to be approximately normally distribution
+
+Defined by two parameters: the population mean $\mu$ and the population standard deviation $\sigma$
+
+$$X \sim N(\mu, \sigma)$$ Or, with variance:
+
+$$X \sim N(\mu, \sigma^2)$$
+
+## Normal Probability Density Function
+
+$$
+P(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{\frac{-(x-\mu)^2}{2\sigma^2}}
+$$
+
+## The Empirical Rule (68-95-99.7 Rule)
+
+Roughly 68% of observations are within 1 standard deviation of the mean
+
+Roughly 95% of observations are within 2 standard deviations of the mean
+
+Roughly 99.7% of observations are within 3 standard deviations of the mean
+
+## Normal Probability Calculations
+
+Suppose that the return for a particular large-cap stock fund is normally distributed with a mean of 14.1% and a standard deviation of 3.2%.
+
+```{r}
+curve(dnorm(x, mean = 14.1, sd = 3.2), from = 14.1-3*3.2, to = 14.1+3*3.2, 
+  main = "X ~ N(14.1, 3.2)", 
+  ylab = "Probability",
+  xlab = "Return (%)", 
+  las = 1)
+
+segments(14.1, 0, 14.1, dnorm(14.1, mean = 14.1, sd = 3.2), col = "blue")
+
+#axis(1, at = seq(14.1-3*3.2, 14.1+3*3.2, by = 3.2), las = 1)
+
+
+```
+
+1.  Generate the return for a randomly selected day of this large-cap stock fund.
+
+```{r}
+rnorm(1, mean = 14.1, sd = 3.2)          # same as rnorm(1, 14.1, 3.2)
+```
+
+2.  What is the probability that the large-cap stock fund has a return of 10% or less?
+
+```{r}
+pnorm(q = 10, mean = 14.1, sd = 3.2, lower.tail = TRUE)
+```
+
+3.  What is the probability that the large-cap stock fund has a return of at least 20%?
+
+```{r}
+pnorm(q = 20, mean = 14.1, sd = 3.2, lower.tail = FALSE)
+```
+
+4.  What is the probability that the large-cap stock fund has a return between 13% and 18%?
+
+```{r}
+perct18 <- round(pnorm(q = 18, mean = 14.1, sd = 3.2, lower.tail = TRUE), 3)
+cat("Proportion less than 18%: ", perct18)
+
+perct13 <- round(pnorm(q = 13, mean = 14.1, sd = 3.2, lower.tail = TRUE), 3)
+cat("\n\nProportion less than 13%: ", perct13)
+
+cat("\n\nProportion between 13% and 18%: ",perct18 - perct13)
+```
+
+### Visualize normal curve with shaded region
+
+```{r}
+# Input mean and stdev
+mu <- 14.1
+sigma <- 3.2
+
+# Input lower and upper values (from the question)
+lower.x <- 13
+upper.x <- 18
+step <- (upper.x - lower.x) / 100
+
+
+# Set x-axis bounds of graphical display
+bounds <- c(mu - 3.5 * sigma, mu + 3.5 * sigma)
+
+# Set coordinates for shading
+cord.x <- c(lower.x, seq(lower.x, upper.x, step), upper.x)
+cord.y <- c(0, dnorm(seq(lower.x, upper.x, step), mu, sigma), 0)
+
+# Plot normal curve
+curve(dnorm(x, mu, sigma), 
+      xlim = bounds, 
+      las = 1, 
+      xlab = "Return (%)", 
+      ylab = "Density")
+
+# Include shaded region
+polygon(cord.x, cord.y, col = "skyblue")
+
+# Include text to identify bounds
+text(lower.x, 0, lower.x, col = "red", cex = 0.75)
+text(upper.x, 0, upper.x, col = "red", cex = 0.75)
+
+# From https://stackoverflow.com/questions/16504452/color-a-portion-of-the-normal-distribution with some edits
+```
+
+5.  What return percentage is at the third quartile?
+
+The third quartile $Q_{3}$ is also which percentile?
+
+#### Solution
+
+```{r}
+qnorm(p = 0.75, mean = 14.1, sd = 3.2, lower.tail = TRUE)
+```
+
+#### Visualize
+
+```{r}
+curve(dnorm(x, mean = 14.1, sd = 3.2), from = 0, to = 28, 
+  main = "X ~ N(14.1, 3.2)", 
+  ylab = "Density",
+  xlab = "Return (%)", 
+  las = 1)
+
+# Plot vertical at third quartile
+segments(16.258, 0, 16.258, dnorm(16.258, mean = 14.1, sd = 3.2), col = "red", lwd = 3)
+```
+
+Since normal distributions are continuous, we don't use dnorm to calculate a probability (we do use it to graph, but not to solve probability calculations).
+
+In other words, we don't ask "What's the probability of getting a return of *exactly* 20?"
+
+------------------------------------------------------------------------
+
+# VIDEO: Modeling Binomial & Poisson with Normal Curves
+
+It is common to approximate (or "model") a discrete distribution with a continuous density curve.
+
+### Approximate Binomial
+
+When the number of successes and failures are both greater than 10, the binomial distribution is approximately normal.
+
+```{r}
+# Generate all possible number of successes (when n = 100)
+success <- 0:100
+
+# Plot all possible number of successes (when n = 100)
+plot(success, 
+     dbinom(success, 
+            size = 100, 
+            prob = 0.40), 
+     type = 'h',
+     lwd = 4,
+     las = 1,
+     xlab = "Number of Successes", 
+     ylab = "Probability")
+
+```
+
+### Approximate Poisson
+
+When lambda is large, the poisson distribution is approximately normal
+
+```{r}
+# Generate all possible number of successes (0 to 100)
+successPois50 <- 0:100
+
+# Plot all possible number of successes (when mu = 50)
+plot(successPois50, 
+     dpois(successPois50, 
+            lambda = 10), 
+     type = 'h',
+     lwd = 4,
+     las = 1,
+     xlab = "Number of Arrivals in 3-Minute Interval", 
+     ylab = "Probability")
+```
+
+### Standard Normal Distribution
+
+```{r}
+curve(dnorm(x, mean = 0, sd = 1), from = -4, to = 4, 
+  main = "X ~ N(0, 1)", 
+  ylab = "Probability",
+  xlab = "Z-score", 
+  las = 1)
+
+axis(1, at = seq(-4, 4, by = 1), las = 1)
+
+# Plot vertical at third quartile
+#segments(16.258, 0, 16.258, dnorm(16.258, mean = 14.1, sd = 3.2), col = "red", lwd = 3)
+```
+
+Just because a variable has been standardized, doesn't mean it's "standard normal"!
+
+```{r}
+# Make up some non-normal data
+non_norm_data <- c(0, 0, 0, 10, 20)
+
+# Plot a dotplot
+stripchart(non_norm_data, method = "stack", pch = 16, cex = 2, ylim = c(0, 10))
+
+# Calculate mean and SD of the data
+data_mean <- mean(non_norm_data)
+data_sd <- sd(non_norm_data)
+
+# Standarize the data by converting to z-scores
+st_data <- (non_norm_data - data_mean) / data_sd
+st_data
+
+cat("The new mean and sd are ", mean(st_data), "and", sd(st_data))
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: t-distribution
+
+Normal distributions have two parameters: $\mu$ and $\sigma$.
+
+We can generate an infinite number of different normal curves by changing one or both of these values. We call this the *family* of normal curves.
+
+In many sampling situations, we do not know the the population standard deviation, so we use the standard deviation from the sample $s_{x}$ to estimate the unknown population standard deviation $\sigma$.
+
+When this occurs, we use a new distribution, called the *t-distribution* (or Student's T distribution) for our calculations.
+
+See textbook info [here](https://learningstatisticswithr.com/book/probability.html#otherdists)
+
+The t-distribution is like a standard normal distribution: continuous, symmetric about the mean, with a mean of 0. But the family of t-curves is based on only one parameter: the *degrees of freedom* (df).
+
+## Visualize family of curves for a t-distribution
+
+```{r}
+curve(dt(x, df = 1), from = -4, to = 4, ylim = c(0, 0.4), ylab = "Density", las = 1, main = "Lower peak and heavier/thicker tails than a normal distribution")
+text(2, 0.3, "df = 1", col = "blue")
+
+curve(dt(x, df = 3), from = -4, to = 4, ylim = c(0, 0.4), ylab = "Density", las = 1)
+text(2, 0.3, "df = 3", col = "blue")
+
+curve(dt(x, df = 6), from = -4, to = 4, ylim = c(0, 0.4), ylab = "Density", las = 1)
+text(2, 0.3, "df = 6", col = "blue")
+
+curve(dt(x, df = 10), from = -4, to = 4, ylim = c(0, 0.4), ylab = "Density", las = 1)
+text(2, 0.3, "df = 10", col = "blue")
+
+curve(dt(x, df = 30), from = -4, to = 4, ylim = c(0, 0.4), ylab = "Density", las = 1, main = "t-distribution is approaching a z-distribution")
+text(2, 0.3, "df = 30", col = "blue")
+```
+
+As degrees of freedom increases (from 1 to infinity), the peak gets taller and the tails get thinner. The t-distribution approaches the standard normal distribution as df approaches infinity.
+
+T-distributions are continuous, symmetric
+
+### Multiple Choice:
+
+What distribution has a greater percentage of observations to the right of 2, that is, which has the greatest area under the curve to the right of 2?
+
+a)  A t-distribution with df = 1
+b)  A t-distribution with df = 3
+c)  A t-distribution with df = 6
+d)  A t-distribution with df = 10
+e)  A standard normal distribution
+
+#### Ans: Visual Solution
+
+The point of this question is to understand what we mean that t-distributions have "thicker tails". Let's look at the above plots.
+
+#### Ans: Calculation with pt()
+
+```{r}
+# Since we want "to the right" of a boundary, we need lower.tail = FALSE
+
+# a)
+pt(q = 2, df = 1, lower.tail = FALSE)
+
+# b)
+pt(q = 2, df = 3, lower.tail = FALSE)
+
+# c)
+pt(q = 2, df = 6, lower.tail = FALSE)
+
+# d)
+pt(q = 2, df = 10, lower.tail = FALSE)
+
+# e)
+pt(q = 2, df = 9999, lower.tail = FALSE) # with df = 9999, t is essentially z
+
+# e) with normal
+pnorm(q = 2, mean = 0, sd = 1, lower.tail = FALSE)
+```
+
+### How do we calculate "degrees of freedom" when using a t-distribution for a single quantitative variable?
+
+$$
+df = n - 1
+$$
+
+#### Why n - 1?
+
+Suppose you know the mean is 20 and you have 5 data points.
+
+$$
+\frac{x_1+x_2+x_3+x_4+x_5}{5}=20
+$$
+
+Suppose we know one value:
+
+$$
+\frac{2+x_2+x_3+x_4+x_5}{5}=20
+$$
+
+Suppose we know two values:
+
+$$
+\frac{2+5+x_3+x_4+x_5}{5}=20
+$$
+
+Suppose we know three values:
+
+$$
+\frac{2+5+15+x_4+x_5}{5}=20
+$$
+
+Suppose we know four values:
+
+$$
+\frac{2+5+15+60+x_5}{5}=20
+$$
+
+I was "free" to pick any value for $x_i$ until the last one. I can automatically know (calculate) the last value without being told what it is (it *has to equal* 18 here).
+
+### Application
+
+We will use t-distributions to calculate a *t-critical value*, used when constructing confidence intervals for means (and slopes) and performing significance tests for means (and slopes).
+
+#### Example using qt()
+
+You select a random sample of 12 from a population and would like to know the t-critical value at the 97.5th percentile. What is this t-value and how does this t-value compare to a z-value at the 97.5 percentile?
+
+#### Visualize
+
+```{r}
+curve(dt(x, df = 11), 
+      from = -4, 
+      to = 4, 
+      ylim = c(0, 0.4), 
+      ylab = "Density", 
+      las = 1, 
+      main = "T distribution (df = 11)")
+
+segments(2.2, 0, 2.2, dt(2.2, df = 11), col = "red",  lwd = 2)
+```
+
+#### Solution
+
+```{r}
+qt(p = 0.975, df = 11, lower.tail = TRUE)
+
+qnorm(p = 0.975, mean = 0, sd = 1, lower.tail = TRUE)
+```
+
+### Objectives with t-distributions
+
+Know what a t-distribution is, why we use it, characteristics about it (df, peak, tails).
+
+How and when to use`pt()` and `qt()`
+
+We don't typically sample from a t-distribution nor do we calculate the probability at an exact value, so we won't be using `rt()` and `dt()`.
+
+T-distributions are used with confidence intervals and significance tests for means (and slopes)
+
+------------------------------------------------------------------------
+
+# VIDEO: Chi-square
+
+Greek letter "chi" (rhymes with "sky"): $\chi^2$
+
+Four prefixes: rchisq(), dchisq(), pchisq(), qchisq()
+
+See textbook info [here](https://learningstatisticswithr.com/book/probability.html#otherdists)
+
+One parameter: the degrees of freedom (df), but we calculate it differently than df with t-distributions
+
+## Relationship to Normal Curve
+
+"sum of squares"
+
+```{r}
+# We won't `set.seed()`, so your histogram will be different due to random sampling
+
+normal.a <- rnorm(n = 1000)  # set of normally distributed data
+
+hist_data <- hist(normal.a) 
+
+```
+
+```{r}
+#hist_data <- hist(normal.a)
+
+# define x and y values to use for normal curve
+x_values <- seq(min(normal.a), max(normal.a), length = 100)
+
+y_values <- dnorm(x_values, mean = mean(normal.a), sd = sd(normal.a)) 
+
+y_values <- y_values * diff(hist_data$mids[1:2]) * length(normal.a) 
+
+# plot histogram
+hist(normal.a, las = 1, ylim = c(0, 225))
+
+# overlay normal curve on histogram
+lines(x_values, y_values, lwd = 2)
+
+# Ideas from https://www.statology.org/overlay-normal-curve-histogram-in-r/
+
+```
+
+## Generate two more sets of normally distributed data
+
+```{r}
+normal.b <- rnorm(n = 1000)  # another set of normally distributed data
+
+normal.c <- rnorm(n = 1000)  # and another!
+```
+
+## Generate a chi-square distribution with df = 3
+
+```{r}
+chi.sq.3 <- (normal.a)^2 + (normal.b)^2 + (normal.c)^2 #sum of squares!
+
+hist(chi.sq.3, xlab = "Chi-Square value", las = 1)
+```
+
+## Visualize chi-square distribution df = 3
+
+```{r}
+curve(dchisq(x, df = 3), from = 0, to = 20,
+      main = "Chi-Square Distribution (df = 3)",
+      ylab = "Density",
+      lwd = 2,
+      las = 1,
+      col = "steelblue")
+```
+
+## Visualize Family of Chi-Square Curves
+
+The mean of the distribution is shown as a vertical red line.
+
+```{r}
+chi.df.a <- 3
+curve(dchisq(x, df = chi.df.a), from = 0, to = 30,
+      main = "Chi-Square Distribution (df = 3)",
+      ylab = "Density",
+      lwd = 2,
+      las = 1,
+      col = "steelblue")
+segments(chi.df.a, 0, chi.df.a, dchisq(chi.df.a, df = chi.df.a), col = "red")
+
+chi.df.b <- 5
+curve(dchisq(x, df = chi.df.b), from = 0, to = 30,
+      main = "Chi-Square Distribution (df = 5)",
+      ylab = "Density",
+      lwd = 2,
+      las = 1,
+      col = "steelblue")
+segments(chi.df.b, 0, chi.df.b, dchisq(chi.df.b, df = chi.df.b), col = "red")
+
+chi.df.c <- 7
+curve(dchisq(x, df = chi.df.c), from = 0, to = 30,
+      main = "Chi-Square Distribution (df = 7)",
+      ylab = "Density",
+      lwd = 2,
+      las = 1,
+      col = "steelblue")
+segments(chi.df.c, 0, chi.df.c, dchisq(chi.df.c, df = chi.df.c), col = "red")
+
+chi.df.d <- 10
+curve(dchisq(x, df = chi.df.d), from = 0, to = 30,
+      main = "Chi-Square Distribution (df = 10)",
+      ylab = "Density",
+      lwd = 2,
+      las = 1,
+      col = "steelblue")
+segments(chi.df.d, 0, chi.df.d, dchisq(chi.df.d, df = chi.df.d), col = "red")
+
+```
+
+## Facts about Chi-Square Distribution
+
+$$
+\chi^2_{df}
+$$
+
+Family of chi-square curves vary based on one parameter: degrees of freedom (df). The way to calculate `df` depends on the type of statistical test we'll use, but it's *not* like the t-distribution where $df = n - 1$ (n is the sample size).
+
+-   Continuous
+
+-   Right-skewed (becomes more symmetric as df increases)
+
+-   Only non-negative numbers: $\chi^2_{df} \ge 0$
+
+-   Like all density curves, the area under the curve is 1 (aka, 100%)
+
+-   The mean of a chi-square distribution is df and its variance is $2(df)$.
+
+-   Peak (mode) at $df - 2$ (as long as $df > 2$).
+
+In future lessons, we'll discuss a chi-square goodness-of-fit test and a chi-square test for homogeneity and association.
+
+### Question using chi-square
+
+Let me give you a basic idea of what will happen (without getting too involved in the mechanics that we'll learn later):
+
+Suppose our sample leads to a chi-square value of 3 with degrees of freedom 4. How often does 8 or more appear in the distribution? Should we be surprised at this result?
+
+Let's simulate 100 random chi-square values from a distribution with df = 4.
+
+```{r}
+set.seed(123) # for reproducibility
+
+my_chi <- rchisq(n = 100, df = 4)
+
+my_chi
+
+sum(my_chi >= 8) # have R count the values >= 8 so I don't have to
+```
+
+a)  How often does 8 or more occur in this random sample?
+
+b)  Is the result of our sample surprising (statistically significant)?
+
+c)  Calculate this probability without a simulation.
+
+```{r}
+pchisq(q = 8, df = 4, lower.tail = FALSE)
+```
+
+### Extra: How chi-square relates to t-distribution
+
+```{r}
+scaled.chi.sq.3 <- chi.sq.3 / 3 # scale by dividing by df (3)
+
+normal.d <- rnorm( n=1000 )  # yet another set of normally distributed data
+
+t.3 <- normal.d / sqrt( scaled.chi.sq.3 )  # divide by square root of scaled chi-square to get t
+
+hist(t.3, xlab = "t-values", las = 1, ylab = "Density", main = "T Distribution with df = 3")
+```
+
+------------------------------------------------------------------------
+
+# VIDEO: F-distribution
+
+Continuous, unimodal, right-skewed distribution, area under curve is 1 (100%)
+
+The F-distribution is the *ratio* of two chi-squared distributions, so it uses two different degrees of freedom; in other words, its family of distributions vary by two parameters: $df1$ and $df2$.
+
+You may also see $v1$ and $v2$ or $df_{n}$ and $df_{d}$, n for numerator and d for denominator.
+
+### Example with F-distribution
+
+Suppose we discover an F statistic of 6 based on our ANOVA (more on that later) with df1 = 3 and df2 = 8. How do we determine if this result is significant?
+
+Let's simulate taking random samples from an F-distribution with df1 = 3 and df2 = 8.
+
+```{r}
+set.seed(120) # for reproducibility
+
+round(rf(20, df1 = 3, df2 = 8), 1)                 # same as rf(20, 3, 8)
+```
+
+a)  Use the 20 trials in the simulation above to *estimate* the probability of obtaining a 6 or more from an F-distribution with F(3, 8).
+
+b)  Would the results of our sample be statistically significant? (i.e. should we be surprised at the results)
+
+c)  What could we do to improve the accuracy of our estimate?
+
+d)  Calculate the probability of observing a 6 or more from this distribution.
+
+```{r}
+pf(q = 6, df1 = 3, df2 = 8, lower.tail = FALSE)
+```
+
+In future lessons, we'll discuss a significance test called Analysis of Variance (ANOVA) which utilizes the F-distribution.
+
+For more discussion on the relationship of the normal distribution to other discussions (t-, chi-square, & F), see the LSR textbook [here](https://learningstatisticswithr.com/book/probability.html#otherdists)
+
+------------------------------------------------------------------------

@@ -1,0 +1,983 @@
+---
+title: "DTSC-550 Notes: Probability"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+# Display output within the notebook
+knitr::opts_chunk$set(echo = TRUE, results = 'show')
+
+```
+
+# Probability Terms
+
+## Random Experiment
+
+A *random experiment* is a process that generates well-defined outcomes
+based on a chance process.
+
+-   Toss a coin (head, tail)
+
+-   Roll a die (1, 2, 3, 4, 5, 6)
+
+-   Conduct a sales call (purchase, no purchase)
+
+-   Hold a stock for one year (price increases, decreases, remains the
+    same)
+
+-   Reduce price of a product (demand goes up, goes down, remains the
+    same)
+
+What is random?
+
+-   "That was random!"
+
+-   "I picked a random person off the street"
+
+## Sample space
+
+The collection of all possible outcomes of a chance experiment
+
+Let S be the *sample space* for a coin toss, which has two possible
+*outcomes*:
+
+```         
+S = {head, tail}
+```
+
+```{r}
+# Create a coin
+coin <- c("heads", "tails")
+
+# Flip the coin
+sample(coin, size = 1, replace = T)
+
+# Your result may differ than mine
+```
+
+Let S be the *sample space* for tossing a coin twice, which has four
+possible *outcomes*:
+
+```         
+S = {(head, head), (head, tail), (tail, head), (tail, tail)}
+```
+
+```{r}
+coin <- c("heads", "tails")
+sample(coin, size = 2, replace = T)
+```
+
+Let S be the *sample space* for tossing a 6-sided die, which has six
+possible *outcomes*:
+
+```         
+S = {1, 2, 3, 4, 5, 6}
+```
+
+The result of one *trial*:
+
+```{r}
+die <- c(1:6)
+
+sample(die, size = 1, replace = TRUE)
+
+# Your result may differ than mine
+```
+
+The results of ten *trials*:
+
+```{r}
+die <- c(1:6)
+
+sample(die, size = 10, replace = TRUE)
+
+# Your result may differ than mine
+```
+
+Reproducing random results
+
+```{r}
+# Set seed so you can reproduce my results
+set.seed(42)
+
+sample(die, size = 20, replace = TRUE)
+```
+
+## Events
+
+An *event* is any collection of outcomes from the sample space.
+
+A *simple event* is an event consisting of exactly one of the outcomes
+in the sample space.
+
+Let the event X = rolling an odd number on a 6-sided die: X = {1, 3, 5}
+
+## Sampling with replacement vs. Sampling without replacement
+
+```{r}
+# Different seed
+set.seed(25)
+
+# What happens if we change T to F?
+sample(die, size = 20, replace = T)
+
+# Is there a max sample size?
+
+
+```
+
+# ---
+
+# Probability & Odds
+
+## Probability
+
+The *probability of an event* is equal to the number of outcomes in the
+event by the total number of outcomes in the sample space.
+
+Suppose we want P(X), where event X is an odd number, so X = {1, 3, 5}
+
+On a 6-sided die, 3 outcomes are odd (1, 3, 5). There are six total
+possible outcomes, so the probability is
+
+P(X) = 3/6 = 1/2
+
+## Odds
+
+$$
+P(X) = \frac{Successes}{Total}
+$$
+
+$$
+Odds=\frac{Successes}{Failures} \mbox{,   also  as  Successes:Failures}
+$$
+
+If your probability of rolling a 5 on a six-sided die is 1/6, what are
+the odds?
+
+If your odds of rolling snake eyes (a pair of ones) on two six-sided
+dice is 1:35, what is the probability?
+
+## A Data Example
+
+From Peck, et al., *Statistics: Learning from Data*, 2nd ed (2019)
+
+The National Center for Health Statistics gave the following information
+on births in the United States in a recent year.
+
+| Type of Birth         | Number of Births |
+|-----------------------|------------------|
+| Single birth          | 3,848,214        |
+| Twins                 | 135,336          |
+| Triplets              | 4,233            |
+| Quadruplets           | 246              |
+| Quintuplets or higher | 47               |
+| Total Births          | 3,988,076        |
+
+Use this information to estimate the probability that a randomly
+selected pregnant woman who gave birth in a recent year.
+
+a)  Calculate and interpret P(delivered twins)
+
+```{r}
+##probability
+# Error: 135,336 / 3,988,076
+
+135336 / 3988076
+```
+
+"If we randomly select one delivery from this set, about 3.4% of the
+time we will observe twins."
+
+"If we observe a large number of deliveries, about 3.4% will be twins."
+
+-   Interpreting probability as a "relative frequency"
+-   **The Law of Large Numbers**: if we observe more and more
+    repetitions of any chance process, the proportion of times that a
+    specific outcome occurs approaches its probability
+
+b)  P(delivered quadruplets)
+
+```{r}
+246 / 3988076
+
+# scientific notation e-05 = 10 ^ -5
+```
+
+0.00006168388
+
+c)  P(gave birth to more than a single child)
+
+```{r}
+# Let's review assignments
+moreThanOne <- 135336 + 4233 + 246 + 47
+Total <- 3988076
+
+moreThanOne / Total
+```
+
+```{r}
+twins <- 135336
+trips <- 4233
+quads <- 246
+quintsOrMore <- 47
+Total <- 3988076
+
+# Hmmm...
+twins + trips + quads + quintsOrMore / Total
+```
+
+d\. Find the odds of selecting a mom with multiple births.
+
+```{r}
+successes <- twins + trips + quads + quintsOrMore
+failure <- Total - successes
+
+successes
+failure
+
+#odds
+odd <- (successes / failure) * 1000
+odd
+
+```
+
+## Final Comments
+
+Notice that the probabilities are equivalent to the percentages.
+
+**Probability**: a number between \_\_ and \_\_ (inclusive)
+
+-   0 = never happens
+
+    -   What's the probability of rolling a W on a six-sided die
+        numbered 1 to 6?
+
+-   1 = always happens
+
+    -   What's the probability of rolling a number on a six-sided die
+        numbered 1 to 6?
+
+**Percentage**: a number between \_\_% and \_\_% (inclusive)
+
+**Proportion**: same as probability, but doesn't have the "random" or
+"chance" sense
+
+------------------------------------------------------------------------
+
+Probabilities are everywhere!
+
+Probability is the backbone of AI
+
+------------------------------------------------------------------------
+
+# ---
+
+# Complements, Intersections & Unions
+
+## Complements
+
+Not "compliment"
+
+Given an event A, the *complement* of A is defined to be the event
+consisting of all outcomes that are *not* in A.
+
+$$
+P(A) + P(A^C) = 1
+$$
+
+$$
+P(A)  = 1 - P(A^C)
+$$
+
+Alternate notations: $\overline{A}$, $\tilde{A}$
+
+### Example
+
+The probability of rolling a sum of a 12 on two fair, six-sided dice is
+1/36.
+
+Find the probability you roll a sum of a 2, 3, 4, 5, 6, 7, 8, 9, 10, or
+11.
+
+$$
+P(\mbox{sum of 12}) + P(\mbox{sum of NOT 12}) = 1
+$$
+
+$$
+P(\mbox{sum of NOT 12}) = 1 - (1/36) = 35/36
+$$
+
+The probability of all possible outcomes sum to \_\_\_.
+
+Be careful you use the correct complement
+
+-   Suppose an online class has 250 students in it. What is the
+    complement of selecting at least two students from the class?
+    -   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ..., 249, 250
+
+------------------------------------------------------------------------
+
+## Intersections and Unions
+
+The *intersection* of events vs. the *union* of events
+
+-   The union contains all elements from *either set*
+
+-   The intersection contains only the elements that are in *both sets*
+
+    -   Joint probability
+
+A = {1, 2, 3, 4} and B = {2, 4, 5}
+
+-   Intersection of A & B?
+
+-   Union of A & B?
+
+Suppose we randomly select 300 Eastern students who took only one class
+last term and we record their grade in the class and if they had
+part-time or full-time work.
+
+The *two-way table* (aka, contingency table) below shows possible
+results:
+
+| Grade | Part-time | Full-time | Total |
+|-------|-----------|-----------|-------|
+| A     | 100       | 80        | 180   |
+| B     | 50        | 40        | 90    |
+| C     | 20        | 10        | 30    |
+| Total | 170       | 130       | 300   |
+
+Let the event A = student got an A. Let the event B = student got a B,
+and FT = full-time
+
+a.  Describe the *intersection* of A and FT in context.
+
+$$
+A \cap FT
+$$
+
+b.  Describe the *intersection* of A and B in context.
+
+$$
+A \cap B
+$$
+
+c.  Describe the *union* of A and B (aka, A "or" B) in context.
+
+$$
+A \cup B
+$$
+
+d.  Describe the *union* of A and FT (aka, A "or" FT) in context.
+
+$$
+A \cup FT
+$$
+
+Inclusive OR vs. the Exclusive OR
+
+-   Do you want ice cream or a brownie?
+
+-   Are you a full-time or part-time student?
+
+In probability, we mean "inclusive" OR: one or the other *or both*
+
+------------------------------------------------------------------------
+
+# ---
+
+# The General Addition Rule
+
+Given events A and B, the probability of their union is...
+
+$$
+P(A \cup B) = P(A) + P(B) - P(A \cap B)
+$$
+
+| Grade | Part-time | Full-time | Total |
+|-------|-----------|-----------|-------|
+| A     | 100       | 80        | 180   |
+| B     | 50        | 40        | 90    |
+| C     | 20        | 10        | 30    |
+| Total | 170       | 130       | 300   |
+
+Let the event A = student got an A. Let the event B = student got a B.
+Let event FT = full-time student.
+
+1.  Calculate P(A or FT).
+
+$$
+P(A \cup B) = \frac{180}{300} + \frac{130}{300} - \frac{80}{300} = \frac{230}{300}
+$$
+
+2.  Calculate P(A or B).
+
+$$
+P(A \cup B) = \frac{180}{300} + \frac{90}{300} - \frac{0}{300} = \frac{270}{300}
+$$
+
+------------------------------------------------------------------------
+
+### Mutually Exclusive Events
+
+We call the events "getting an A" or "getting a B" ***mutually exclusive
+events.***
+
+*Mutually Exclusive events* are events that have no outcomes in common.
+
+$$
+P(A \cap B) = 0
+$$
+
+Lingo: "They're not mutually exclusive"
+
+### Example
+
+| Grade | Part-time | Full-time | Total |
+|-------|-----------|-----------|-------|
+| A     | 100       | 80        | 180   |
+| B     | 50        | 40        | 90    |
+| C     | 20        | 10        | 30    |
+| Total | 170       | 130       | 300   |
+
+Let the event B = student got an B. Let the event PT = student had
+part-time job
+
+1.  Describe the **intersection** of B and PT, $B \cap PT$. Calculate
+    the probability.
+
+$$
+P(B \cap PT) = \frac{50}{300}
+$$
+
+2.  Describe the **union** of B and PT, $B \cup PT$. Calculate the
+    probability.
+
+$$
+  P(B \cup PT) = P(B) + P(PT) - P(B \cap PT)
+$$
+
+$$
+P(B \cup PT) = \frac{90}{300} + \frac{170}{300} - \frac{50}{300} = \frac{210}{300}
+$$
+
+**Note!** We subtract 50/300 because we *double counted* those 50 as
+both B students and part-time students. We want to include them once,
+but not twice!
+
+------------------------------------------------------------------------
+
+# ---
+
+# Conditional Probability
+
+You work in auto insurance and you're trying to decide how much to
+charge for a young male with pick-up truck.
+
+The probability of an accident (or claim) differs by age and type of
+vehicle.
+
+We need to calculate a "conditional probability."
+
+### Notation: The probability of A given B
+
+$$
+P(A | B)
+$$
+
+-   Important topic with "independence" in this course, i.e., if
+    variables are associated
+
+### Example
+
+| Grade | Part-time | Full-time | Total |
+|-------|-----------|-----------|-------|
+| A     | 100       | 80        | 180   |
+| B     | 50        | 40        | 90    |
+| C     | 20        | 10        | 30    |
+| Total | 170       | 130       | 300   |
+
+Let the event A = student got an A. Let the event FT = student had
+full-time job
+
+1.  Find the probability a full-time student given they earned an A,
+    $P(FT|A)$
+
+2.  Find the probability an A student given they worked full-time,
+    $P(A|FT)$
+
+Answer 1.
+
+$$
+P(FT|A) = \frac{80}{180}
+$$
+
+Answer 2.
+
+$$
+P(A|FT) = \frac{80}{130}
+$$
+
+Conditional probabilities can be tricky! Find the condition first.
+
+-   "Given a student got an A, what's the probability they were
+    full-time?"
+
+-   "What's the probability a student is full-time, given they got an
+    A?"
+
+------------------------------------------------------------------------
+
+A savings and loan bank is interested in whether the probability of a
+customer defaulting on a mortgage differs by marital status. Let the
+events
+
+-   `S` = single
+
+-   `M` = married
+
+-   `D` = customer defaulted
+
+-   `~D` = customer did not default, aka $D^C$
+
+| Marital Status | No Default | Default | Total |
+|----------------|------------|---------|-------|
+| Married        | 64         | 79      | 143   |
+| Single         | 116        | 41      | 157   |
+| Total          | 180        | 120     | 300   |
+
+1.  Calculate the probability a customer defaults given they are
+    married.
+
+    ```{r}
+    79/120
+
+    ##79 / 143
+    ```
+
+2.  Calculate the probability a customer defaults given they are single.
+
+    ```{r}
+    41/120
+
+    ## 41 / 157
+    ##given creates the denom
+    ```
+
+3.  Do these probabilities give us evidence that a customer's default
+    status is associated with marital status?
+
+-   Since 55.2% does not equal 26.1%, we have **strong evidence** that a
+    customer's likelihood of defaulting on their mortgage is associated
+    with their marital status (with married people more likely to
+    default).
+
+-   In other words, we call these events \*not independent\* of each
+    other, but they are associated.
+
+### Final Comments
+
+Common question: How close can the percentages be?
+
+We should use a **significance test** (like a chi-square test of
+independence) to answer this question, which is covered later in this
+course.
+
+Conditional probability comes up a lot in ML/AI contexts (e.g.,
+"confusion matrices", false positive rates, AUC)
+
+------------------------------------------------------------------------
+
+# ---
+
+# Independent Events (Using Technology)
+
+We will use R to calculate the conditional probabilities.
+
+```{r}
+### The mortgagedefault.csv is posted on Brightspace in this module.
+
+# Load CSV
+mortgagedefault <- read.csv("mortgagedefault.csv")
+
+```
+
+```{r}
+head(mortgagedefault, 3)
+```
+
+Is there an association between a borrower's age and their default
+status on their mortgage?
+
+Before we begin, `age` is quantitative, but we need it to be
+categorical.
+
+```{r}
+# Use quartiles to estimate locations to divide ages
+summary(mortgagedefault$Age)
+```
+
+```{r}
+# Use cut function to divide up ages into categories
+age_bins <- cut(mortgagedefault$Age, 
+                      breaks = c(-Inf, 31.75, 35, 38, Inf), 
+                      labels = c("19-31", "32-35", "36-38", "39-51"))
+
+table(age_bins)
+
+# For more info on dividing numeric variables into categories, 
+# see https://universeofdatascience.com/how-to-categorize-numeric-variables-in-r/
+
+```
+
+```{r}
+age_default_t <- table(age_bins, mortgagedefault$default_status)
+age_default_t
+```
+
+```{r}
+# Joint Relative Frequencies
+round(proportions(age_default_t), 3)
+```
+
+Is a customer's default status associated with their age, or is a
+customer's default status independent of age?
+
+-   Association = "not independent"
+
+-   No Association = "independent"
+
+```{r}
+# For convenience:
+age_default_t
+```
+
+a\. Calculate P(Yes \| age 19-31)
+
+```{r}
+36 / (39+36)
+```
+
+b\. Calculate P(Yes \| age 32-35)
+
+```{r}
+37 / (35 + 37)
+```
+
+c\. Is a customer's default status associated with their age, or is a
+customer's default status independent of age?
+
+*We do have evidence of an association, because customers ages 19-31 are
+more likely to default than those who are aged 32-35 (48% \> 40%).*
+
+------------------------------------------------------------------------
+
+We could have R do the work for us...
+
+```{r}
+# Find conditional distribution of default given age
+age_default_props <- proportions(age_default_t, margin = 1)
+
+# Round the proportions
+age_default_props <- round(age_default_props, 3)
+
+age_default_props
+
+# What if we changed the margin?
+ round(proportions(age_default_t, margin = 2), 3)
+```
+
+The conditional distribution of `default status` given `age`.
+
+-   Explanatory variable: Age group
+
+-   Response variable: Default status
+
+The conditional distribution of `age` status given `default status`.
+
+-   Explanatory variable: Default status
+
+-   Response variable: Age
+
+------------------------------------------------------------------------
+
+What is the probability a customer defaults on mortgage based on age
+category?
+
+```{r}
+round(age_default_props, 3)[, 2] # all rows, just 2nd column
+```
+
+Based on these probabilities, we have evidence that younger mortgage
+borrowers are more likely to default (48%) than middle-aged borrowers
+(32-35 at 40% and 36-39 at 30%).
+
+Symbolically, default status would be independent of age category if
+
+$$
+P(default | 19-31) = P(default | 32-35) = P(default | 36-38) = P(default | 39-51)
+$$
+
+### Practice
+
+Is there an association between a person's marital status and if they
+defaulted on their loan?
+
+```{r}
+addmargins(table(mortgagedefault$default_status, mortgagedefault$marital_status))
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# Independent Events (Using Formulas)
+
+$$
+P(default | 19-31) = P(default | 32-35) = P(default | 36-38) = P(default | 39-51)
+$$
+
+Two events are *independent* if $P(A | B) = P(A)$
+
+If the probability of A is not changed by the existence of event B, then
+the events are independent.
+
+Likewise, if $P(B | A) = P(B)$, then A & B are independent.
+
+Also, if $P(A | B) = P(A | B^C)$ then A & B are independent.
+
+## Example
+
+```{r}
+# Add the totals on both margins
+addmargins(age_default_t)
+```
+
+Let event A = YES default and event B = age 19-31.
+
+Are events A and B independent?
+
+Does `P(A | B) = P(A)`?
+
+$$
+P(A | B) = P(YES | 19-31) = \frac{36}{75} = 0.48
+$$
+
+$$
+P(A) = P(YES) = \frac{120}{300} = 0.40
+$$
+
+The overall default rate is 40%. For customers aged 19-31, the default
+rate is higher at 48%. Therefore, defaulting and being 19-31 are **not**
+independent. There is an association: younger customers are more likely
+to default than other customers (in this sample).
+
+------------------------------------------------------------------------
+
+## Mutually Exclusive Events vs. Independent Events
+
+Knowing that one event cannot be another event (i.e., mutually
+exclusive) gives you additional information about their association
+(i.e., lack of independence).
+
+You cannot have (non-trivial) events that are *both* mutually exclusive
+events *and* independent events.
+
+Let event P = person is pregnant and event M = person is male.
+
+P & M are mutually exclusive, but they are not independent.
+
+-   Knowing one event (P) tells you information about the likelihood of
+    another event (M).
+
+Beware of assuming events are independent! See the sad story of Sally
+Clark: (<https://en.wikipedia.org/wiki/Sally_Clark>)
+
+------------------------------------------------------------------------
+
+# ---
+
+# Frequentist Approach to Probability
+
+For more on the frequentist view, see
+[LSR](https://learningstatisticswithr.com/book/probability.html#the-frequentist-view)
+
+The first of the two major approaches to probability, and the more
+dominant one in statistics is referred to as the *frequentist* view, and
+it defines probability as a \*\_ \_ \_ \_\* (four-words).
+
+The majority of statistics courses follow this traditional approach when
+covering inferential statistics (confidence intervals & hypothesis
+testing).
+
+## Example
+
+```{r}
+# Create a virtual coin
+coin <- c("head", "tail")
+
+# Flip the coin once
+sample(coin, 1, replace = TRUE)
+```
+
+```{r}
+# Flip the coin ten times and calculate proportion of tails
+
+num_flips <- 10
+
+sum(sample(coin, num_flips, replace = TRUE) == "tail") / num_flips
+```
+
+The proportion of tails will vary greatly, but as we increase the number
+of flips ("over the long-run"), the proportion will gradually approach
+the probability of 0.50, that is, 50%. This illustrates [*the law of
+large
+numbers*](https://learningstatisticswithr.com/book/probability.html#probmeaning).
+
+## Advantages
+
+1.  Probability is grounded in the the world ("objective")
+
+2.  Probabilities are fixed (unchanging)
+
+3.  Unambiguous: any two people watching the same sequence of events
+    unfold will come up with the same answer
+
+## Disadvantages
+
+1.  Infinite sequences don't exist in the physical world
+
+-   Can we really flip a coin infinitely...and without the coin's
+    characteristics changing?
+
+2.  There are lots of things we assign probabilities to, but we can't
+    use long-run relative frequency to describe them; e.g., a football
+    team has a 60% chance of winning?
+
+3.  If two observers attribute different probabilities to the same
+    event, then at least one of them is wrong.
+
+4.  If your null distribution or assumptions are incorrect (e.g., not
+    normal), then the results are invalid.
+
+------------------------------------------------------------------------
+
+# ---
+
+# Bayesian Approach to Probability
+
+Mathematician and philosopher Rev. Thomas Bayes (1702-1761), "Bayes'
+Rule" or "Bayes' Theorem"
+
+$$
+P(A | B) = \frac{P(B | A)*P(A)}{P(B)}
+$$
+
+$$
+P(Hypothesis | Data) = \frac{P(Data | Hypothesis)*P(Hypothesis)}{P(Data)}
+$$
+
+$$
+P(Cause | Effect) = \frac{P(Effect | Cause)*P(Cause)}{P(Effect)}
+$$
+
+Bayesian approach: older but the minority view among statisticians.
+
+Defines probability as the *degree of belief* a person would assign to
+the truth of the event ("subjectivist view")
+
+Bayesians use a "rational gambling" concept to operationalize "degree of
+belief":
+
+-   Suppose someone offers me a bet on a sports team: If the team wins
+    its next game, I win `$5`; if it doesn't win, I lose `$5`.
+
+    -   If I believe a team has a 60% chance of winning, would I take
+        the bet? If I believed the team had a 99% chance of winning,
+        would I take the bet? What bets am I willing to take?
+
+-   High probability: you're very likely to bet a lot of money on it
+
+-   Low probability: you're unlikely to bet any amount of money on it
+
+## Advantages
+
+1.  You can assign a probability to anything you want to; we're not
+    limited to events that are repeatable
+
+2.  Allows each person to have their own beliefs, and we can still be
+    considered rational
+
+3.  Use prior information to inform your assigned probabilities
+
+4.  Probabilities change based on new information
+
+5.  Lots of modern applications, including machine learning algorithms
+
+6.  You can conduct analyzes before data collection has finished
+
+## Disadvantages
+
+1.  We can't be purely "objective"
+
+2.  Specifying a probability requires us to specify an entity that has
+    the relevant degree of belief -- who or what is the rational being
+    deciding these probabilities and why these probabilities?
+
+3.  Concept & calculations are difficult to grasp for non-statisticians
+    (e.g., prior distributions, posterior probabilities, likelihood,
+    marginal probabilities, conjugate distributions, integration, etc.)
+
+### In defense of Bayes'
+
+"We can never make perfectly objective predictions. They will always be
+tainted by our subjective point of view...We must think more carefully
+about the assumptions and beliefs that we bring to a problem" \~Nate
+Silver, *The Signal and the Noise*, p. 14-15
+
+### Summary
+
+"In short, where the frequentist view is sometimes considered to be *too
+narrow* (forbids lots of things that that we want to assign
+probabilities to), the Bayesian view is sometimes thought to be *too
+broad* (allows too many differences between observers)" - Navarro, *LSR*
+
+------------------------------------------------------------------------
+
+### More Resources
+
+For more on the Bayesian probability, see
+[LSR](https://learningstatisticswithr.com/book/probability.html#the-bayesian-view)
+
+For more on Bayesian Statistics, see
+[LSR](https://learningstatisticswithr.com/book/bayes.html)
+
+For Bayes and the Medical Field, "To Bayes or Not to Bayes: Is this the
+Question?"
+[article](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6406060/)
+
+Bayes' Rule for General Readers
+
+-   Sharon Bertsch McGrayne, *The Theory That Would Not Die: How Bayes'
+    Rule Cracked the Enigma Code, Hunted Down Russian Submarines, and
+    Emerged Triumphant from Two Centuries of Controversy* (2012)
+
+-   Aubrey Clayton, *Bernoulli's Fallacy: Statistical Illogic and the
+    Crisis of Modern Science (2021)*
+
+------------------------------------------------------------------------
+
+This material is for enrolled students' academic use only and protected
+under U.S. Copyright Laws. This content must not be shared outside the
+confines of this course, in line with Eastern University's academic
+integrity policies. Unauthorized reproduction, distribution, or
+transmission of this material, including but not limited to posting on
+third-party platforms like GitHub, is strictly prohibited and may lead
+to disciplinary action. You may not alter or remove any copyright or
+other notice from copies of any content taken from BrightSpace or
+Eastern University's website. © Copyright Notice 2024, Eastern
+University - All Rights Reserved
