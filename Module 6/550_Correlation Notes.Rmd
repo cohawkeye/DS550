@@ -1,0 +1,981 @@
+---
+title: "550_Correlation Notes"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+# Display output within the notebook
+# knitr::opts_chunk$set(echo = TRUE, results = 'show')
+```
+
+# Scatterplots
+
+"The greatest value of a picture is when it forces us to notice what we
+never expected to see," John Tukey
+
+-   One quantitative variable: dotplot, stemplot, boxplot, histogram
+
+-   One categorical variable: pie chart, bargraph
+
+-   One quantitative across (categorical) groups: parallel boxplots,
+    side-by-side stemplot
+
+-   Two categorical variables: mosaic plot, segmented bar graph,
+    side-by-side bar graph
+
+-   Two quantitative variables?
+
+Scatterplots help us visualize the relationship between two quantitative
+variables measured on the same individuals.
+
+------------------------------------------------------------------------
+
+Companies work hard to have their website listed at the top of an
+internet search.
+
+Is there a relationship between a website's position in the results of
+an internet search (1 = top, 2 = second position, etc.) and the
+percentage of people who click on the link for the website?
+
+Here are click-through rates for the top 10 positions in searches on a
+mobile device (TPS7, p. 176).
+
+```{r}
+position <- 1:10
+rate <- c(23.53, 14.94, 11.19, 7.47, 5.29, 3.8, 2.79, 2.11, 1.57, 1.18)
+
+# Create scatterplot
+plot(position,                    # variable on x-axis
+     rate,                        # variable on y-axis
+     pch = 16,                    # filled-in circles
+     cex = 2,                     # larger circle size
+     las = 3,                     # rotate numbers on y-axis
+     xlab = "Position",           # x-axis label
+     ylab = "Click-through Rate") # y-axis label
+
+# If the variables are columns within a dataframe df, use plot(df$col1, df$col2, ...)
+
+```
+
+### Describe the scatterplot.
+
+-   **Direction** (positive, negative, or no)
+
+-   **Form** (linear or non-linear)
+
+-   **Strength** (weak, moderate, strong)
+
+-   **Unusual features** (outliers, clusters, etc.)
+
+Trend, not absolute relationship (i.e., not "deterministic")
+
+Quantitative vs. Categorical
+
+Correlation, Association, Relationship
+
+------------------------------------------------------------------------
+
+# ---
+
+# Correlation
+
+Direction, Form, Strength, Unusual Features
+
+Visual estimate vs. numerical summary
+
+```{r}
+plot(position, 
+     rate, 
+     pch = 16, 
+     cex = 2, 
+     las = 1, 
+     xlab = "Position", 
+     ylab = "Click-through Rate")
+
+cor(position, rate)
+```
+
+### Pearson's correlation coefficient r
+
+A statistic that measures the **strength** and **direction** of a linear
+association between two quantitative variables
+
+-   between -1 and 1, inclusive, aka, $|r| \le 1$
+-   r \> 0 : positive association
+
+```{r}
+hours <- c(0, 0, 1, 2, 2, 3, 5, 7)
+score <- c(0, 10, 50, 60, 65, 70, 80, 100)
+
+# Visualize with a scatterplot
+plot(hours, score, pch = 16, cex = 2, main = "Positive association")
+
+# Calculate the correlation
+cor(hours, score)
+```
+
+-   r \< 0 : negative association
+
+```{r}
+hours <- c(0, 0, 1, 2, 2, 3, 5, 7)
+score <- c(100, 80, 70, 65, 60, 50, 10, 0)
+
+plot(hours, score, pch = 16, cex = 2, main = "Negative association")
+
+cor(hours, score)
+```
+
+-   r = 0 tells us there is no **linear** association between x & y
+
+```{r}
+# For reproducibility
+set.seed(1)
+
+# Fake data with r = 0
+fake_x <- rnorm(100, mean = 80, sd = 5)
+fake_y <- rnorm(100, mean = 80, sd = 5)
+
+# Change viewing window to see two graphs at once: 1 row, 2 columns
+par(mfrow = c(1, 2))
+
+plot(fake_x, 
+     fake_y, 
+     las = 1,
+     pch = 16,
+     main = paste("r =", round(cor(fake_x, fake_y), 2))) # Show the correlation on main title
+
+# Make another r = 0 relationship
+fake_x2 <- rnorm(100, mean = 0, sd = 5)
+fake_y2 <- fake_x2^2 + rnorm(100, mean = 0, sd = 3)
+
+plot(fake_x2, 
+     fake_y2, 
+     las = 1,
+     pch = 16,
+     main = paste("r =", round(cor(fake_x2, fake_y2), 2)))
+
+
+
+```
+
+-   Extreme values of -1 and 1 occurs only in the case of **perfect
+    linear** relationship (i.e., all points fall exactly on the line)
+
+```{r}
+# Change viewing window to see two graphs at once: 1 row, 2 columns
+par(mfrow = c(1, 2))
+
+# Positive association
+plot(fake_x, 
+     fake_x, # plotting identical variable to demonstrate correlation r = 1
+     las = 1,
+     pch = 16,
+     main = paste("r =", round(cor(fake_x, fake_x), 2)),
+     xlab = "",
+     ylab = ""
+     )
+
+# Negative association
+plot(fake_x, 
+     -fake_x, 
+     las = 1,
+     pch = 16,
+     main = paste("r =", round(cor(fake_x, -fake_x), 2)),     
+     xlab = "",
+     ylab = ""
+     )
+```
+
+-   \|r\| close to 1 is "strong"
+
+-   \|r\| close to 0 is "weak"
+
+|            |              |             |              |            |
+|------------|--------------|-------------|--------------|------------|
+| **Strong** | **Moderate** | **Weak**    | **Moderate** | **Strong** |
+| -0.8 to -1 | -0.8 to -0.5 | -0.5 to 0.5 | 0.5 to 0.8   | 0.8 to 1   |
+
+-   A "strong" correlation is dependent on your field (engineering
+    different than social sciences)
+
+-   Correlation is not resistant to extreme values (outliers)
+
+```{r}
+# Scatterplot with outlier
+hours <- c(0, 0, 1, 2, 2, 3, 5, 7)
+score <- c(100, 80, 70, 65, 60, 50, 10, 100)
+
+plot(hours, score, pch = 16, cex = 2, main = "With outlier", sub = paste("r = ", round(cor(hours, score), 3)))
+
+
+# Scatterplot *without* outlier
+hoursNoOutlier <- c(0, 0, 1, 2, 2, 3, 5)
+scoreNoOutlier <- c(100, 80, 70, 65, 60, 50, 10)
+
+plot(hoursNoOutlier, scoreNoOutlier, pch = 16, cex = 2, main = "Without outlier", sub = paste("r = ", round(cor(hoursNoOutlier, scoreNoOutlier), 3)))
+
+```
+
+-   r = 0 means no "linear" association, but there may still be a
+    pattern
+
+```{r}
+hours <- 1:8
+score <- c(100, 80, 70, 65, 65, 71, 80, 100)
+
+plot(hours, score, pch = 16, cex = 2, main = "No 'linear' association, but...")
+
+cor(hours, score)
+```
+
+### Visuals on different strengths and directions
+
+-   [Matching Correlations](https://istics.net/Correlations/)
+
+-   [Guess the correlation](https://www.geogebra.org/m/KE6JfuF9)
+
+-   Rossman/Chance Applet: [Guess the
+    correlation](https://www.rossmanchance.com/applets/2021/guesscorrelation/GuessCorrelation.html)
+
+------------------------------------------------------------------------
+
+### For more on correlation, see the textbook:
+
+-   [The Correlation
+    Coefficient](https://learningstatisticswithr.com/book/descriptives.html#the-correlation-coefficient)
+
+-   [Interpreting
+    Correlations](https://learningstatisticswithr.com/book/descriptives.html#interpretingcorrelations)
+
+------------------------------------------------------------------------
+
+# ---
+
+# Exploring with Scatterplots
+
+The donors dataset comes from "Practical Machine Learning with R" by
+Nwanganga and Chapple (p. 166-68).
+
+The dataset comes from a national veterans' organization that frequently
+solicits donations through direct mail campaigns to its database of
+current and prospective donors. The organization sent out a test mailing
+to a group of potential donors and gathered information on the response
+to that test mailing.
+
+#### Load the data
+
+Download the `donors.csv` and this Rmd notebook from Brightspace.
+
+Remember to save the CSV in the same folder as this Rmd notebook;
+otherwise, you will need to set your working directory. See previous
+module for assistance.
+
+```{r}
+# How do we load a CSV into R?
+# Store the dataset into an object named "donors"
+donors <- read.csv('donors - Copy.csv')
+
+```
+
+#### Initial Exploration
+
+```{r}
+# How do we do a quick analysis of the data?
+
+summary(donors)
+
+# Note some weird features!
+# See ages, numberChildren, lots of NAs
+# We need a codebook!
+```
+
+#### Are number of gifts correlated with gift amount?
+
+```{r}
+# This doesn't work:
+
+plot(donors$averageGiftAmount, donors$numberGifts)
+
+# How do we fix it?
+
+
+
+
+
+
+
+
+
+```
+
+```{r}
+plot(donors$averageGiftAmount, 
+     donors$numberGifts, 
+     cex = 0.5, # make points smaller
+     las = 1, # rotate numbers on y-axis for more readability
+     pch = 16, # make solid dots
+     xlab = "Average Gift Amount", 
+     ylab = "Number of Gifts")
+
+# Calculate correlation
+cor(donors$averageGiftAmount, donors$numberGifts,)
+
+#direction = negative, strength: weak, form: non-=linerar/ curved , unusual: grouped in lower left.  outliers
+
+
+```
+
+#### Are the number of gifts correlated with the number of months since a donor's last donation?
+
+```{r}
+# Without jitter
+plot(donors$monthsSinceLastDonation, 
+     donors$numberGifts,     
+     cex = 0.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Months since Last Donation", 
+     ylab = "Number of Gifts")
+
+# With jitter
+plot(jitter(donors$monthsSinceLastDonation, 0.5), # add jitter so points don't overlap as much
+     donors$numberGifts,     
+     cex = 0.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Months since Last Donation", 
+     ylab = "Number of Gifts")
+
+# Calculate correlation
+
+
+
+```
+
+#### Your turn: create a scatterplot and calculate correlation of two variables of your choice.
+
+1.  Use donors dataset...or...
+2.  Find (or collect) data with at least two quantitative variables.
+    Share it!
+
+```{r}
+# Scatterplot
+
+#11th comlum
+names(donors)[11]
+names(donors)
+
+# Correlation
+
+
+
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# Correlation Matrices and Scatterplot Matrices
+
+## Visualizing Correlations
+
+We often want to calculate the correlation between several variables
+simultaneously.
+
+First, I will shorten a variable name so the output is cleaner.
+
+```{r}
+# 11th column
+names(donors)
+
+names(donors)[11]
+```
+
+```{r}
+names(donors)[11] <- "yrsFirstDon"
+
+names(donors)
+
+# See update in environment too!
+```
+
+```{r}
+# cor(df[rows, columns])
+
+# Identify the quantitative variables I'm interested in:
+donorsNumeric <- donors[, c("numberChildren", 
+               "incomeRating", 
+               "wealthRating", 
+               "smallestGiftAmount",
+               "yrsFirstDon"
+               )]
+donorsNumeric
+```
+
+```{r}
+# Create correlation matrix
+round(cor(donorsNumeric), 2)
+
+# R = 1
+plot(donors$numberChildren, donors$numberChildren, pch = 16, cex = 1.5)
+```
+
+```{r}
+# Check the documentation
+
+?cor()
+```
+
+`use` = an optional character string giving a method for computing
+covariances in the presence of missing values.
+
+-   "everything"
+
+-   "all.obs"
+
+-   "complete.obs"
+
+-   "na.or.complete"
+
+-   "pairwise.complete.obs"
+
+## Dealing with NAs
+
+`cor(df$var1, df$var2, use = "complete.obs")`
+
+```{r}
+round(cor(donorsNumeric, 
+          use = "complete.obs"), 2)
+```
+
+## A scatterplot matrix
+
+With large datasets, we often want to visualize the relationships
+between many variables at once.
+
+`pairs()`
+
+You'll learn more ways to visualize relationships in DTSC-650 *Data
+Analytics with R*.
+
+```{r}
+pairs(donors[, c("wealthRating", 
+               "smallestGiftAmount",
+               "yrsFirstDon"
+               )])
+
+```
+
+```{r}
+### All in one line to note the syntax
+
+# pairs(donors[, c("wealthRating", "smallestGiftAmount", "yrsFirstDon")])
+```
+
+#### A Cleaner `pairs()`
+
+This is much nicer syntax! And, no need to make a new dataframe, like
+*donorsNumeric*
+
+```{r}
+pairs(~ wealthRating + smallestGiftAmount + yrsFirstDon, 
+      data = donors, 
+      na.action = na.omit)
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# How is correlation calculated manually?
+
+## 1. Using Covariance
+
+How is the sample covariance calculated?
+
+$$
+Cov(x, y) = \frac{\Sigma(x_i-\bar{x})(y_i-\bar{y})}{n-1}
+$$
+
+If $Cov(X, Y) > 0$, we say X and Y are *positively* correlated: on
+average, X and Y are either both greater or less than their respective
+means.
+
+If $Cov(X, Y) < 0$, we say X and Y are *negatively* correlated: on
+average, one of X or Y is greater than and one less than their mean.
+
+```{r}
+# Calculate covariance manually
+
+# Data
+position <- 1:10
+rate <- c(23.53, 14.94, 11.19, 7.47, 5.29, 3.8, 2.79, 2.11, 1.57, 1.18)
+
+# Calculate means
+mean(position)
+mean(rate)
+
+# Calculate deviations
+deviation_positions <- position - mean(position)
+deviation_rates <- rate - mean(rate)
+
+# Print
+deviation_positions
+deviation_rates
+
+```
+
+```{r}
+# Find products
+# Note we're multiplying the coordinates in each (x, y) pair
+products <- (deviation_positions) * (deviation_rates)
+products
+
+# Find sum of products
+sum_products <- sum(products)
+sum_products
+
+# Find "average"
+my_covariance <- sum_products / (length(products)-1)
+my_covariance
+```
+
+$$
+cov(x, y) = \frac{\Sigma(x_i-\bar{x})(y_i-\bar{y})}{n-1}
+$$
+
+```{r}
+# Calculate covariance with short-cut
+cov(position, rate)
+```
+
+What would the units be?
+
+Suppose x = years and y = dollars. What would be the units of covariance
+be?
+
+## Why we don't use covariance...
+
+Covariance...
+
+-   no bound to covariance
+
+-   has (strange) units
+
+-   units vary making it an unhelpful statistic to compare association
+    for different variables
+
+We need to standardize the covariance to make it more useful.
+
+$$
+z = \frac{x-\mu}{\sigma}
+$$
+
+```{r}
+# Calculate standard deviations of x and y
+sd_position <- sd(position)
+sd_rate <- sd(rate)
+
+# Calculate correlation using covariance
+
+my_covariance / (sd_position*sd_rate)
+# Verify the correlation with R function
+
+cor(rate, position)
+```
+
+The *Pearson's correlation coefficient* r is
+
+$$
+r = \frac{Cov[X, Y]}{\sigma_X*\sigma_Y}
+$$
+
+## 2. Using Z-scores
+
+$$
+r = \frac{\Sigma (z_x*z_y)}{n-1} \\
+$$
+
+$$
+r = \frac{1}{n-1}\Sigma(\frac{x_i-\bar{x}}{s_x})(\frac{y_i-\bar{y}}{s_y})
+$$
+
+```{r}
+# Challenge: Work through the manual calculations of z-scores to calculate the correlation.
+# Tip: Do piece-by-piece, rather than everything all at once.
+
+
+
+
+```
+
+This formula is helpful in understanding properties of correlation,
+which we'll see in a later video.
+
+## 3. R short-cut
+
+We definitely prefer this way!
+
+```{r}
+cor(rate, position)
+```
+
+### Another formula for correlation
+
+A relic of the pre-computer age.
+
+$$
+r = \frac{\Sigma(x_i-\bar{x})(y_i-\bar{y})}{\sqrt{\Sigma(x_i-\bar{x})^2}*\sqrt{\Sigma(y_i-\bar{y})^2}}
+$$
+
+### Final Note on Population vs. Sample Covariance
+
+The *sample* covariance in this formula:
+
+$$
+Cov(x, y) = \frac{\Sigma(x_i-\bar{x})(y_i-\bar{y})}{n-1}
+$$
+
+The *population* covariance is this formula:
+
+$$
+Cov(x, y) = \frac{\Sigma(x_i-\mu_x)(y_i-\mu_y)}{N}
+$$
+
+For the sample covariance to be an unbiased estimator of the population
+covariance, we divide by `n-1`.
+
+------------------------------------------------------------------------
+
+# ---
+
+# Properties of Correlation
+
+$$
+r = \frac{\Sigma (z_x*z_y)}{n-1}
+$$
+
+```{r}
+# Data for illustration
+x <- 1:10
+y <- c(2, 5, 13, 7, 8, 10, 12, 14, 17, 25)
+
+my_cor <- round(cor(x, y), 3)
+
+plot(x, y, 
+     main = paste("r =", my_cor), # Include the correlation right on the graph with paste()! 
+     pch = 16, 
+     las = 1)
+```
+
+## 1. R requires quantitative variables, not categorical
+
+```{r}
+z <- c(rep("yes", 4), rep("no", 6))
+z
+
+#cor(x, z)
+
+```
+
+Note: We could encode the categories as numbers!
+
+-   Binary
+
+-   Ordinal
+
+-   Nominal
+
+------------------------------------------------------------------------
+
+## 2. R makes no distinction between explanatory and response variables
+
+```{r}
+# Data for illustration
+x <- 1:10
+y <- c(2, 5, 13, 7, 8, 10, 12, 14, 17, 25)
+
+plot(x, y, main = paste("r =", round(cor(x, y), 3)), pch = 16, las = 1)
+
+# Switch x and y
+y <- 1:10
+x <- c(2, 5, 13, 7, 8, 10, 12, 14, 17, 25)
+
+plot(x, y, main = paste("r =", round(cor(x, y), 3)), pch = 16, las = 1)
+```
+
+------------------------------------------------------------------------
+
+## 3. R does not change if you change units; it is not affected by adding or multiplying each data value by a constant
+
+```{r}
+# Data for illustration
+x <- 1:10
+y <- c(2, 5, 13, 7, 8, 10, 12, 14, 17, 25)
+
+plot(x, y, main = paste("r =", round(cor(x, y), 3)), pch = 16, las = 1)
+
+# Change the units
+x <- 2*(1:10)
+y <- c(2, 5, 13, 7, 8, 10, 12, 14, 17, 25)/10
+
+plot(x, y, main = paste("r =", round(cor(x, y), 3)), pch = 16, las = 1)
+```
+
+Covariance changes based on units; correlation does not.
+
+-   "Standardized Covariance"
+
+------------------------------------------------------------------------
+
+## 4. R has no unit of measurement (so it's not a percent!)
+
+r = 0.875
+
+------------------------------------------------------------------------
+
+## 5. The sign of r always matches the direction of the linear relationship.
+
+```{r}
+my_x <- donors$numberGifts
+my_y <- donors$totalGivingAmount
+
+plot(my_x,
+     my_y,
+     xlab = "Number of Gifts",
+     ylab = "Total Giving ($)",
+     pch = 16,
+     main = paste("r =", round(cor(my_x, my_y), 4))
+)
+
+```
+
+------------------------------------------------------------------------
+
+## 6. R is not resistant to extreme values
+
+#### [Investigate](https://digitalfirst.bfwpub.com/stats_applet/stats_applet_5_correg.html)
+
+Fill-in-the-blank with "strengthen" or "weaken" or "keep about the
+same":
+
+#### Adding observations
+
+-   Adding a point outside the trend will \_ the correlation.
+
+-   Adding a point inside the trend will \_ the correlation.
+
+#### Removing observations
+
+-   Removing a point that is outside the trend will \_ the correlation.
+
+-   Removing a point that is inside the trend will \_ the correlation.
+
+------------------------------------------------------------------------
+
+# ---
+
+# The Main Caution about Correlation
+
+Just because two variables are strongly associated does not mean one
+*causes* the other.
+
+## 1. Correlation does not imply causation
+
+[Chocolate Consumption, Cognitive Function, and Nobel
+Laureates](https://www.biostat.jhsph.edu/courses/bio621/misc/Chocolate%20consumption%20cognitive%20function%20and%20nobel%20laurates%20(NEJM).pdf)
+
+[Response](https://jn.nutrition.org/article/S0022-3166(22)01219-6/fulltext#)
+
+-   Is x causing y? Maybe y is causing x? Maybe z is causing x and y?
+
+    -   [Causal
+        Diagrams](https://www.ibpsychmatters.com/why-correlation-is-not-causation)
+
+More examples
+
+-   [Coffee = Long
+    Life?](https://www.cnbc.com/2017/07/11/coffee-drinking-could-lead-to-longer-life-studies-say.html)
+
+-   See spurious correlations [here]
+    (<https://tylervigen.com/spurious-correlations>)
+
+-   [Luke
+    5:29-32](https://www.biblegateway.com/passage/?search=Luke%205%3A29-32&version=NLT),
+    [Luke
+    7:36-50](https://www.biblegateway.com/passage/?search=Luke%207%3A36-50&version=TLB)
+    Association does not imply causation
+
+### More on causation
+
+-   Randomized experiments ([A/B
+    testing](https://hbr.org/2017/06/a-refresher-on-ab-testing))
+
+-   Observational studies and [Hill's
+    Criteria](https://en.wikipedia.org/wiki/Bradford_Hill_criteria) (cf.
+    [critical
+    discussion](https://www.rtihs.org/sites/default/files/26902%20Rothman%201998%20The%20encyclopedia%20of%20biostatistics.pdf))
+
+-   Judea Pearl and Dana Mackenzie, *The Book of Why: The New Science of
+    Cause and Effect* (2018)
+
+    -   The book explores the subject of causality and causal inference
+        from statistical and philosophical points of view for a general
+        audience
+
+-   Correlation does not imply causation...but it might!
+
+------------------------------------------------------------------------
+
+# ---
+
+# More Cautions about Correlation
+
+## 2. A correlation close to -1 or 1 doesn't imply the association is linear
+
+```{r}
+
+plot(position, rate,pch = 16, cex = 2, las = 1, xlab = "Position", ylab = "Click-through Rate", main = paste("r = ", round(cor(position, rate), 3))) 
+```
+
+See
+[applet](https://digitalfirst.bfwpub.com/stats_applet/stats_applet_5_correg.html)
+
+## 3. A correlation close to 0 does not imply there is no association at all
+
+```{r}
+# Make some non-linear (curved) data
+x <- c(-5:5)
+y <- x^2
+
+plot(x,
+     y,
+     xlab = "",
+     ylab = "",
+     pch = 16,
+     main = paste("r =", round(cor(x, y), 4))
+)
+
+```
+
+## 4. Do not use Pearson's correlation coefficient to describe non-linear relationships
+
+Other options: Spearman's Rank, Kendall's Tau, Xsi
+
+### Example
+
+```{r}
+# Non-linear scatterplot 1
+plot(position, 
+     rate, 
+     pch = 16, 
+     cex = 2, 
+     las = 1, 
+     xlab = "Position", 
+     ylab = "Click-through Rate")
+
+cor(position, rate)
+
+# Defaults
+#cor(position, rate, use = "everything", method = "pearson")
+
+# A different method
+cor(position, rate, method = "spearman")
+```
+
+### One more example
+
+```{r}
+# Make some non-linear (curved) data
+x <- c(0:10)
+y <- x^2
+
+plot(x,
+     y,
+     xlab = "",
+     ylab = "",
+     pch = 16,
+     main = paste("Pearson r =", 
+                  round(cor(x, y), 3), 
+                  ", Spearman r = ", 
+                  round(cor(x, y, method = "spearman"), 3))
+)
+
+# Compare with Spearman's rank correlation
+cor(x, y, method = "spearman")
+```
+
+## 5. Always plot your data!
+
+Frank Anscombe (1918--2001) was an English statistician who generated
+the values in "Anscombe's Quartet"
+
+```{r}
+anscombe
+
+# Plot 1
+plot(anscombe$x1, anscombe$y1)
+
+# Challenge 1: 
+## Create the other three scatterplots for the following variables:
+
+### Plot 2 of x2 vs. y2
+plot(anscombe$x2, anscombe$y2)
+
+### Plot 3 of x3 vs. y3
+
+plot(anscombe$x3, anscombe$y3)
+### Plot 4 of x4 vs. y4
+
+plot(anscombe$x4, anscombe$y4)
+# Challenge 2: Visually estimate the correlation for each of the four scatterplots.
+
+
+
+# Challenge 3: Calculate the correlations for each scatterplot to see how close your visual estimates were.
+
+
+
+```
+
+What was the main takeaway from the *anscombe* investigation above?
+
+Documentation on
+[anscombe](https://www.rdocumentation.org/packages/asbio/versions/1.9-7/topics/anscombe)
+
+More on Anscombe's quartet
+[here](https://en.wikipedia.org/wiki/Anscombe%27s_quartet)
+
+For another interesting data set to illustrate this same concept, follow
+this link:
+[Datasaurus](https://cran.r-project.org/web/packages/datasauRus/vignettes/Datasaurus.html)
+
+## 6. Don't talk about "correlations" with categorical variables
+
+-   Is hair color "correlated" with eye color?
+
+-   You cannot calculate correlation with categorical variables:
+
+```{r}
+table(donors$urbanicity, donors$socioEconomicStatus)
+
+#cor(donors$socioEconomicStatus, donors$urbanicity)
+```
+
+------------------------------------------------------------------------
+
+This material is for enrolled students' academic use only and protected
+under U.S. Copyright Laws. This content must not be shared outside the
+confines of this course, in line with Eastern University's academic
+integrity policies. Unauthorized reproduction, distribution, or
+transmission of this material, including but not limited to posting on
+third-party platforms like GitHub, is strictly prohibited and may lead
+to disciplinary action. You may not alter or remove any copyright or
+other notice from copies of any content taken from BrightSpace or
+Eastern University's website. © Copyright Notice 2024, Eastern
+University - All Rights Reserved
+
+############################################################################# 

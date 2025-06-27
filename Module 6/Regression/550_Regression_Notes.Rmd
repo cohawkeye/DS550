@@ -1,0 +1,1519 @@
+---
+title: "550 Regression Notes"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+# Display output within the notebook
+# knitr::opts_chunk$set(echo = TRUE, results = 'show')
+```
+
+# Intro to Regression
+
+For more on regression, [see
+LSR](https://learningstatisticswithr.com/book/regression.html).
+
+Using X to predict Y
+
+Is there an association between X and Y?
+
+A **scatterplot** visualizes the relationship between two quantitative
+variables on the same individuals.
+
+```{r}
+age <- c(1, 2, 2, 2, 2, 3, 4, 4, 5, 5)
+cost <- c(350, 370, 480, 520, 590, 550, 750, 800, 790, 950)
+
+plot(age, cost, pch = 16, las = 1, cex = 1, xlab = "Age of Bus (years)", ylab = "Annual Maintenance Cost ($)")
+
+#From Camm, et. al., Business Analytics, 3e, 356
+
+# A *time series* is a scatterplot with time (seconds, months, years, decades) on the x-axis (as the explanatory variable).
+```
+
+Outcome = Model + Error
+
+Avoid "overfitting"; don't play connect the dots!
+
+Introductory, baseline ML models
+
+| Model | Data |
+|----------------------|--------------------------------------------------|
+| Linear regression | One predictor with a continuous outcome |
+| Multiple regression | Multiple predictors with a continuous outcome |
+| Logistic regression | One predictor with a binary outcome |
+| Multiple logistic regression | Multiple predictors with a binary outcome |
+| Polynomial regression | Relationship between the predictor(s) and the continuous outcome is nonlinear |
+| ...and more... |  |
+
+------------------------------------------------------------------------
+
+A **response variable** (y) measures an outcome of a study.
+
+-   Dependent variable, outcome
+
+An **explanatory variable** (x) may help predict or explain changes in a
+response variable.
+
+-   Independent variable, predictor, feature
+
+If knowing the value of one variable helps us predict the value of the
+other, there is an **association** between the two variables.
+
+*Regressing Y on X*
+
+```{r}
+# mtcars is built-in data within R
+
+plot(mtcars$hp, mtcars$mpg, pch = 16, las = 1, cex = 1, main = "Terminology Practice", xlab = "Horsepower", ylab = "Miles Per Gallon")
+```
+
+------------------------------------------------------------------------
+
+# Your Turn
+
+The dataset comes from a national veterans' organization that frequently
+solicits donations through direct mail campaigns to its database of
+current and prospective donors. The organization sent out a test mailing
+to a group of potential donors and gathered information on the response
+to that test mailing.
+
+From *Practical Machine Learning with R* by Nwanganga and Chapple (p.
+166-68)
+
+## Download the data
+
+Download the `donors.csv` and this Rmd notebook from Brightspace.
+
+Remember to save the csv in the same folder as the Rmd notebook;
+otherwise, you will need to set your working directory. See previous
+module for video assistance.
+
+## Load the data
+
+```{r}
+# Load the data as "donors"
+
+donors <- read.csv("donors - Copy.csv")
+
+```
+
+## Familiarize yourself with the data
+
+```{r}
+summary(donors)
+```
+
+## Summarize data
+
+```{r}
+
+
+# Note some weird features!
+# See ages, numberChildren, lots of NAs
+# We need a codebook!
+```
+
+# Sampling from the Population
+
+Sample: 50 donors (n = 50)
+
+Population: All donors (N = 95,412)
+
+```{r}
+# For reproducibility
+set.seed(1)
+
+# Randomly select 50 numbers to represent rows in dataframe
+sampleIDs <- sample(1:95412, size = 50, replace = FALSE)
+
+# Select the columns I'm interested in
+myColumns <- c("age", "incomeRating", "totalGivingAmount", "largestGiftAmount", "isHomeowner", "gender", "urbanicity", "respondedMailing")
+
+# Store the randomly selected rows on the given columns
+sampleDonors <- donors[sampleIDs, myColumns]
+sampleDonors
+
+```
+
+------------------------------------------------------------------------
+
+## Review correlation matrix
+
+With NAs
+
+```{r}
+cor(sampleDonors[1:50, na.rm=FALSE, c("age", "incomeRating", "totalGivingAmount", "largestGiftAmount")])
+?cor
+```
+
+Removing NAs
+
+```{r}
+round(cor(sampleDonors[1:50, c("age", "incomeRating", "totalGivingAmount", "largestGiftAmount")], use = "complete.obs"), 2)
+```
+
+------------------------------------------------------------------------
+
+## A Scatterplot
+
+```{r}
+plot(sampleDonors$age, 
+     sampleDonors$incomeRating, 
+     cex = 0.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Age", 
+     ylab = "Income Rating")
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# The Line of Best Fit
+
+\*Be sure you finished the task in the prior video!
+
+outcome = model + error
+
+```{r}
+giftCor <- round(cor(sampleDonors$largestGiftAmount, sampleDonors$totalGivingAmount), 2)
+
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = paste("r = ", giftCor))
+```
+
+Review: Describe the relationship between the largest gift amount and
+total giving for this sample of 50 donors.
+
+## What line best models this relationship?
+
+-   "Trend line"
+
+-   "Line of Best Fit"
+
+-   "Least Squares Regression Line" (LSRL)
+
+-   "Ordinary Least Squares Regression" (OLSR)
+
+`lm(y ~ x)` = linear model predicting y given x
+
+```{r}
+# Calculate coefficients of best fitting linear model
+
+model <- lm(sampleDonors$totalGivingAmount ~ sampleDonors$largestGiftAmount)
+##response first (Y), predictor (x) 
+
+##51.82 is the coeff, y intercept , touches the y axis
+
+
+##3.91 is the slope of the line
+
+model
+```
+
+**Intercept** is the y-intercept, where the best-fitting line hits the
+y-axis
+
+**Slope** is the "incline" of the best-fitting line
+
+"Slope-Intercept Form"
+
+$$
+y = mx + b
+$$
+
+`m` is the slope `b` is the y-intercept
+
+In statistics, we write it differently: $$
+\widehat{y} = a + b(x) \\
+\widehat{y} = a + bx \\
+\widehat{y} = b_0 + b_1x 
+$$
+
+The latter form makes the most sense, given multiple regression (when we
+have multiple coefficients, not just two).
+
+$b_0$ and $b_1$ are parameters (also as $\theta_0$ and $\theta_1$ or
+$\beta_0$ and $\beta_1$)
+
+------------------------------------------------------------------------
+
+Why the hat $\hat{y}$? Why is it important?
+
+Outcome = Model + Error
+
+$$y = a + bx + \epsilon \\$$ or $$\hat{y} = a + bx \\$$
+
+It's a trend, not a guarantee; not "deterministic", not "exact"
+
+`lm(y ~ x)$coefficients[1]` to access the y-intercept
+
+`lm(y ~ x)$coefficients[2]` to access the slope
+
+```{r}
+# Store the coefficients on the linear model
+my_intercept <- round(model$coefficients[1], 1)
+my_slope <- round(model$coefficients[2], 1)
+
+# Plot scatterplot
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = paste("LSRL: ", "Predicted y = ", my_intercept, "+", my_slope, "(x)"))
+
+# Plot LSRL
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# Residuals
+
+Before we can understand what makes the LSRL the "best fitting" line, we
+need to understand what a residual is.
+
+Let's consider the scatterplot:
+
+```{r}
+# Store the coefficients on the linear model
+my_intercept <- round(model$coefficients[1], 1)
+my_slope <- round(model$coefficients[2], 1)
+
+# Plot scatterplot
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = paste("LSRL: ", "Predicted y = ", my_intercept, "+", my_slope, "(x)"))
+
+# Plot LSRL
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+```
+
+-   Based on the LSRL, which donors gave *more than expected* based on
+    their largest gift amount?
+
+-   Based on the LSRL, which donors gave *less than expected* based on
+    their largest gift amount?
+
+------------------------------------------------------------------------
+
+A *residual* is the difference between the actual value of y and the
+value of y predicted by the regression line.
+
+Residual = actual y - predicted y
+
+or
+
+Residual = observed y - expected y
+
+or
+
+$$
+\epsilon = y - \hat{y}
+$$
+
+A *positive* residual means...
+
+A *negative* residual means...
+
+```{r}
+# Create a simple dataset
+x <- c(1, 2, 3, 4, 5)
+y <- c(2, 4, 6, 8, 10)  # Perfectly linear relationship (y = 2x)
+
+# Introduce one positive residual and one negative residual
+y[2] <- y[2] + 2  # Positive residual
+y[4] <- y[4] - 2  # Negative residual
+
+# Fit a linear model
+ex_model <- lm(y ~ x)
+
+# Plot the data and the fitted line
+plot(x, y, pch = 16, cex = 1.5, las = 1, col = "black", main = "Positive & Negative Residuals")
+abline(ex_model, col = "blue", lwd = 3)
+
+# Add residual lines
+for (i in 1:length(x)) {
+  lines(c(x[i], x[i]), c(y[i], predict(ex_model)[i]), col = "red", lty = 2, lwd = 2.5)
+}
+```
+
+"the line *underpredicts* when..."
+
+"the line *overpredicts* when..."
+
+If a residual is close to (or equals) zero, that means...
+
+The sum of all the residuals = \_\_.
+
+Note: A residual is the *vertical* distance from a point to the LSRL
+
+```{r}
+# Find the donor who gave $150 as largest gift amount
+sampleDonors[sampleDonors$largestGiftAmount == 150, ]
+
+# Alternate approach
+which(sampleDonors$largestGiftAmount == 150)
+### 46 is the 46th row in sampleDonors and does not match the original index of 13602
+```
+
+```{r}
+# Pick select columns
+sampleDonors[sampleDonors$largestGiftAmount == 150, c("largestGiftAmount", "totalGivingAmount")]
+```
+
+## Calculate and interpret the residual for this donor.
+
+```{r}
+190 - (51.8 + 3.9* (150))
+
+## 
+```
+
+Interpretation: for the is doner whos largetst gitf was 150, the lsrl
+overpred their total giving my 446
+
+or this donor gave 446 less than predicted.
+
+------------------------------------------------------------------------
+
+## Practice
+
+Find the donor in this sample whose largest gift amount was \$100, and
+then calculate *and* interpret the residual for this donor.
+
+```{r}
+which(sampleDonors$largestGiftAmount==100)
+sampleDonors[sampleDonors$largestGiftAmount == 100, c("largestGiftAmount", "totalGivingAmount")]
+#which(sampleDonors$largestGiftAmount == 150)
+#190 - (51.8 + 3.9* (150))
+
+921- (51.8 + 3.9(100))
+
+```
+
+Interpretation:
+
+## R stores the residuals
+
+`lm(y ~ x)$residuals`
+
+```{r}
+# List all residuals
+model$residuals
+
+# Order the residuals
+#sort(model$residuals)
+```
+
+### Illustrating residuals
+
+```{r}
+# Create linear regression model
+model <- lm(sampleDonors$totalGivingAmount ~ sampleDonors$largestGiftAmount)
+
+# Plot scatterplot
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = paste("LSRL: ", "y-hat = ", my_intercept, "+", my_slope, "(x)"))
+
+# Plot LSRL
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+
+# Plot each residual from y to predicted y (i.e. fitted value) with segments()
+## segments(x1, y1, x2, y2)
+
+segments(sampleDonors$largestGiftAmount, # x1
+         fitted(model),                   # y1
+         sampleDonors$largestGiftAmount, # x2
+         sampleDonors$totalGivingAmount,  # y2
+         col = "blue",
+         lty = 2) 
+```
+
+------------------------------------------------------------------------
+
+## Residual Plot
+
+We can plot the explanatory variable (or the predictions) vs. the
+residuals on a plot called a *residual plot*. More on residual plots
+later.
+
+```{r}
+# Plot scatterplot with LSRL
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = "Scatterplot")
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+
+# Residual Plot
+plot(sampleDonors$largestGiftAmount, 
+     model$residuals, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Residual", 
+     las = 1,
+     pch = 16,
+     cex = 1.5,
+     main = "Residual Plot")
+
+abline(h = 0, col = "red", lwd = 2)
+```
+
+R comes with a built-in residual plot (which includes other diagnostic
+graphs).
+
+```{r}
+plot(model)
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# Why is the least-squares regression line the "best fitting" line?
+
+[Squared Residuals](https://www.geogebra.org/m/DtsMkj2R)
+
+Another applet: [Guess the LSRL
+Applet](https://phet.colorado.edu/sims/html/least-squares-regression/latest/least-squares-regression_en.html)
+
+The least-squares regression is the best-fitting line because it \_\_\_
+the \_\_\_ of the squared \_\_\_.
+
+$$
+d_1^2+d_2^2+d_3^2+d_4^2+ ...+d_n^2= \mbox{a minimum}
+$$
+
+$$
+e_1^2+e_2^2+e_3^2+e_4^2+ ...+e_n^2= \mbox{a minimum}
+$$
+
+$$
+\underset{b_0, b_1}{\text{min}} \mbox{ }\Sigma(residuals)^2
+$$
+
+$$
+\underset{b_0, b_1}{\text{min}} \mbox{ }\Sigma(y-b_0-b_1x)^2
+$$
+
+------------------------------------------------------------------------
+
+## How are the coefficients of the LSRL calculated?
+
+### The slope
+
+1.  The slope using averages:
+
+$$
+b = \frac{\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})}{\sum_{i=1}^n (x_i - \bar{x})^2}
+$$
+
+2.  The slope using sums only: $$
+    b = \displaystyle\frac{\displaystyle\ n \sum x_i y_i - \sum x_i \sum y_i}{\displaystyle\ n \sum x_i^2 - (\sum x_i)^2}
+    $$
+
+To derive these formulas, we need multivariate calculus and linear
+algebra.
+
+3.  The slope using correlation $$ b = r\frac{s_y}{s_x}$$
+
+### The y-intercept
+
+$\hat{y} = a + b(x)$
+
+The centroid $(\bar{x}, \bar{y})$ always lies on the LSRL.
+
+$$
+a = \bar{y} - b(\bar{x})
+$$
+
+------------------------------------------------------------------------
+
+## Identify the coefficients in regression output
+
+```{r}
+# Note different syntax with data = ...
+model <- lm(totalGivingAmount ~ largestGiftAmount, data = sampleDonors)
+#totalGiving Amount (response) (X) ~ largest explanatory (y)
+model
+```
+
+```{r}
+summary(model)
+```
+
+Identify the slope and the y-intercept in the regression output above.
+
+```{r}
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# Interpreting the Coefficients of a Linear Model
+
+```{r}
+model <- lm(totalGivingAmount ~ largestGiftAmount, data = sampleDonors)
+
+model
+
+### NOTE: 
+### model <- lm(sampleDonors$totalGivingAmount ~ sampleDonors$largestGiftAmount) 
+### also works here but creates an issue with predict() below
+
+# Store the coefficients on the linear model
+my_intercept <- round(model$coefficients[1], 1)
+print("Intercept")
+my_slope <- round(model$coefficients[2], 1)
+print("Slope")
+# Plot scatterplot
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = paste("LSRL: ", "Predicted y = ", my_intercept, "+", my_slope, "(x)"))
+
+# Plot LSRL
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+```
+
+The **slope** is a rate of change.
+
+$$
+slope = \frac{rise}{run} = \frac{\Delta y}{\Delta x} = \frac{y_2-y_1}{x_2-x_1} = \frac{slope}{1}
+$$
+
+To interpret the slope:
+
+-   *Slope*: We predict \_\_\_ [response variable] to increase by \_\_\_
+    [slope] for every 1 additional \_\_\_ [explanatory variable].
+-   For a one unit increase in X, we expect a $b_1$ change in Y.
+
+------------------------------------------------------------------------
+
+$$
+Y-intercept: (0, y)
+$$
+
+To interpret the y-intercept:
+
+-   *Y-Intercept*: We predict \_\_\_ [y-int] \_\_\_ [response variable]
+    when \_\_\_ [explanatory variable] is zero.
+
+------------------------------------------------------------------------
+
+Interpret the slope and y-intercept of our linear model:
+
+```{r}
+model$coefficients
+```
+
+Slope: We predict the total giving to increase \$3.91 for each
+additional \$1 increase in largest gift amount.
+
+Y-intercept: When a donor's largest gift amount is \$0, the predicted
+total giving is \$51.82.
+
+------------------------------------------------------------------------
+
+### Final Comments
+
+#### 1. The slope is a prediction or estimate; it's not a guarantee, so we must use "predicted" in our interpretation.
+
+NOT THIS: "The total giving will increase `$3.90` for every `$1`
+increase in highest gift amount"
+
+#### 2. The y-intercept often does not have a meaningful interpretation.
+
+"We predict a resting heart rate of -57 bpm for a body weight of 0
+pounds."
+
+#### 3. Beware of extrapolation
+
+Making a prediction outside the domain of our explanatory variable.
+
+Use the LSRL to predict the total giving of a donor whose largest given
+was \$5000.
+
+```{r}
+model
+
+51.82 + 3.91*5000
+
+predict(model, data.frame(largestGiftAmount = 5000))
+```
+
+```{r}
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1.5,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = paste("What is extrapolation?"))
+
+# Plot LSRL
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+```
+
+------------------------------------------------------------------------
+
+# ---
+
+# Residual Plots: Is the Model Appropriate?
+
+## Example 1
+
+```{r}
+position <- 1:10
+rate <- c(23.53, 14.94, 11.19, 7.47, 5.29, 3.8, 2.79, 2.11, 1.57, 1.18)
+
+# Create scatterplot
+plot(position,                    # variable on x-axis
+     rate,                        # variable on y-axis
+     pch = 16,                    # filled-in circles
+     cex = 2,                     # larger circle size
+     las = 1,                     # rotate numbers on y-axis
+     xlab = "Position",           # x-axis label
+     ylab = "Click-through Rate") # y-axis label
+
+abline(rate_model, col="red", 2)
+```
+
+```{r}
+# 1) Find the linear model for position vs. rate
+
+rate_model <- lm (rate ~ position)
+rate_model
+
+# 2) Construct a residual plot (use position vs. residuals).
+
+rate_model$residuals
+plot (position, rate_model$residuals, pch=16)
+# 3) Include a horizontal line at residual = 0.
+
+abline(h=0, col="red")
+
+```
+
+-   If the residual plot shows a curved pattern or a fanning out/in
+    shape, the model was \_\_curved\_\_\_\_\_. not appropriate
+
+-   If the residual plot shows random scatter, the model was
+    appropriate.
+
+The model should explain the pattern; if there's a left-over pattern,
+try a different model (e.g., quadratic)
+
+------------------------------------------------------------------------
+
+## Example 2
+
+```{r}
+model <- lm(totalGivingAmount ~ largestGiftAmount, data = sampleDonors)
+
+plot(sampleDonors$largestGiftAmount, 
+     model$residuals, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Residual", 
+     las = 1,
+     pch = 16,
+     cex = 1.5)
+
+abline(h = 0, col = "red", lwd = 2)
+```
+
+## Example 3
+
+Is a linear model an appropriate model for the relationships between age
+and largest gift amount?
+
+```{r}
+plot(sampleDonors$age, sampleDonors$largestGiftAmount)
+```
+
+```{r}
+# Create linear model
+model_age <- lm(sampleDonors$largestGiftAmount ~ sampleDonors$age)
+
+# Plot model diagnostics
+plot(model_age)
+```
+
+------------------------------------------------------------------------
+
+For more on residual plots, [see
+LSR](https://learningstatisticswithr.com/book/regression.html#regressionlinearity).
+
+# ---
+
+# R-Squared: How Well Does the Model Fit?
+
+**Residual plots:** did I pick an appropriate model?
+
+**R-Squared:** does the model do a good job?
+
+-   Appropriate, but poor performance
+
+For more on r-squared, [see
+LSR.](https://learningstatisticswithr.com/book/regression.html#r2)
+
+[Comparing SSE with SST](https://www.geogebra.org/m/DtsMkj2R)
+
+```{r}
+
+# Have both plots appear in one viewing window (1 row, 2 columns)
+par(mfrow = c(1, 2))
+
+# Plot 1
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving", 
+     main = "Should we use the mean?")
+
+# Plot mean response
+abline(h = mean(sampleDonors$totalGivingAmount), lwd = 2, col = "blue")
+
+# Plot 2
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = "Should we use the model?")
+
+# Plot LSRL
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+```
+
+Which model should we use to make predictions: the mean of the response
+or the LSRL?
+
+------------------------------------------------------------------------
+
+## Calculate SST
+
+```{r}
+# View response variable values
+sampleDonors$totalGivingAmount
+
+# Find deviation from point to the mean response
+totGivingDev <- sampleDonors$totalGivingAmount - mean(sampleDonors$totalGivingAmount)
+totGivingDev
+
+# Square the deviations
+totGivingDev^2
+
+# Calculate total sum of squares
+sst <- sum(totGivingDev^2)
+
+sst
+
+```
+
+## Calculate SSE
+
+```{r}
+# Find deviation from point to LSRL
+model$residuals
+
+# Square the deviations
+(model$residuals)^2
+
+# Calculate sum of squares when using the model
+sse <- sum((model$residuals)^2)
+sse
+```
+
+Note: I used `SSE` here, but `SSM` or `SSR` or `SSresid` are other names
+for the same quantity.
+
+## Calculate the proportion of error that remains
+
+```{r}
+sse / sst
+```
+
+## Calculate the proportion of error that the LSRL removed
+
+```{r}
+1 - sse/sst
+```
+
+An amazing connection:
+
+```{r}
+# Find the correlation
+giving_correlation <- cor(sampleDonors$largestGiftAmount, sampleDonors$totalGivingAmount)
+giving_correlation
+
+# Square the correlation
+giving_correlation^2
+
+```
+
+$$
+r^2 = 1-\frac{SSE}{SST}
+$$
+
+We want $r^2$ to be as large as possible (i.e., close to 1.00); we can
+compare $r^2$ across various models.
+
+## Interpretation
+
+$r^2$: **"the coefficient of determination"**
+
+-   Measures of the percent reduction in the sum of squared residuals
+    when using the LSRL to make predictions, rather than using the mean
+    value of y (the response variable)
+
+-   Measures the proportion (or percentage) of the variation in the
+    response variable that is accounted for by the LSRL using the
+    explanatory variable
+
+```{r}
+# Regression output provides R-squared
+summary(model)
+```
+
+------------------------------------------------------------------------
+
+Interpret $r^2 = 0.34$ in this context.
+
+-   The LSRL using largest gift amount accounts for 34% of the
+    variability in total giving amount.
+
+-   34% of the variability in total giving amount is accounted for by
+    the LSRL using largest gift amount.
+
+The linear model using [*explanatory variable*] accounts for $r^2$ of
+the variability in [*response variable*].
+
+------------------------------------------------------------------------
+
+## One last example
+
+```{r}
+position <- 1:10
+rate <- c(23.53, 14.94, 11.19, 7.47, 5.29, 3.8, 2.79, 2.11, 1.57, 1.18)
+
+par(mfrow = c(1, 2))
+
+plot(position,                   
+     rate,                        
+     pch = 16,                    
+     cex = 2,                     
+     las = 1,                     
+     xlab = "Position",           
+     ylab = "Click-through Rate",
+     main = "Should we use the mean?") 
+abline(h = mean(rate), lwd = 2, col = "blue")
+
+plot(position,                   
+     rate,                        
+     pch = 16,                    
+     cex = 2,                     
+     las = 1,                     
+     xlab = "Position",           
+     ylab = "Click-through Rate",
+     main = "Should we use the model?") 
+
+abline(lm(rate~position), lwd = 2, col = "red")
+
+```
+
+```{r}
+cor(position, rate)^2
+```
+
+Interpret $r^2=0.8144$ in context.
+
+------------------------------------------------------------------------
+
+# ---
+
+# Inference for Slope: CI
+
+Use a statistic from a sample to learn about an unknown parameter from a
+population.
+
+Summary of some parameters and statistics in this course:
+
+|   | Data Type | Parameter | Statistic |
+|-----------------|-----------------|-----------------|----------------------|
+| Means | Quantitative | $\mu$ | $\bar{x}$ |
+| Difference in Means | Quantitative | $\mu_1-\mu_2$ | $\bar{x}_1-\bar{x}_2$ |
+| Proportion | Categorical | $p$ | $\widehat{p}$ |
+| Difference in Proportions | Categorical | $p_1-p_2$ | $\widehat{p }_1-\widehat{p}_2$ |
+| Slope | Quantitative | $\beta$ | $b$ or $b_1$ or $\widehat{\beta}_1$ |
+
+**Confidence Interval:** We would like to estimate the true population
+slope $\beta$ between two variables using our sample slope $b$.
+
+## Sampling Variability Illustration
+
+```{r}
+# I am not setting a random seed here, so your results will differ from mine.
+
+# Pick 4 different random samples
+sampleIDs1 <- sample(1:95412, size = 50, replace = FALSE)
+sampleIDs2 <- sample(1:95412, size = 50, replace = FALSE)
+sampleIDs3 <- sample(1:95412, size = 50, replace = FALSE)
+sampleIDs4 <- sample(1:95412, size = 50, replace = FALSE)
+
+# Select the columns I'm interested in
+myColumns <- c("age", "incomeRating", "totalGivingAmount", "largestGiftAmount", "isHomeowner", "gender", "urbanicity", "respondedMailing")
+
+# Store the randomly selected rows on the given columns
+sampleDonors1 <- donors[sampleIDs1, myColumns]
+sampleDonors2 <- donors[sampleIDs2, myColumns]
+sampleDonors3 <- donors[sampleIDs3, myColumns]
+sampleDonors4 <- donors[sampleIDs4, myColumns]
+
+# Calculate linear model for each sample
+mod1 <- lm(sampleDonors1$totalGivingAmount~sampleDonors1$largestGiftAmount)
+mod2 <- lm(sampleDonors2$totalGivingAmount~sampleDonors2$largestGiftAmount)
+mod3 <- lm(sampleDonors3$totalGivingAmount~sampleDonors3$largestGiftAmount)
+mod4 <- lm(sampleDonors4$totalGivingAmount~sampleDonors4$largestGiftAmount)
+
+# Store the slope from each model
+mod1slope <- round(mod1$coefficients[2], 1)
+mod2slope <- round(mod2$coefficients[2], 1)
+mod3slope <- round(mod3$coefficients[2], 1)
+mod4slope <- round(mod4$coefficients[2], 1)
+
+# Store r-squared for each model
+mod1corr <- round(sqrt(summary(mod1)$r.squared), 2)
+mod2corr <- round(sqrt(summary(mod2)$r.squared), 2)
+mod3corr <- round(sqrt(summary(mod3)$r.squared), 2)
+mod4corr <- round(sqrt(summary(mod4)$r.squared), 2)
+
+# 2x2 viewing window
+par(mfrow = c(2, 2))
+
+# Plot 4 scatterplots with LSRL to illustrate sampling variability
+
+plot(sampleDonors1$largestGiftAmount, sampleDonors1$totalGivingAmount, cex = 1.5, las = 1, pch = 16,  xlab = "Largest Gift",  ylab = "Total Giving", main = paste("b =", mod1slope, "and r =", mod1corr))
+
+abline(mod1, col = "red", lwd = 1.5)
+
+plot(sampleDonors2$largestGiftAmount, sampleDonors2$totalGivingAmount, cex = 1.5, las = 1, pch = 16,  xlab = "Largest Gift",  ylab = "Total Giving", main = paste("b =", mod2slope, "and r =", mod2corr))
+
+abline(mod2, col = "red", lwd = 1.5)
+
+plot(sampleDonors3$largestGiftAmount, sampleDonors3$totalGivingAmount, cex = 1.5, las = 1, pch = 16,  xlab = "Largest Gift",  ylab = "Total Giving", main = paste("b =", mod3slope, "and r =", mod3corr))
+
+abline(mod3, col = "red", lwd = 1.5)
+
+plot(sampleDonors4$largestGiftAmount, sampleDonors4$totalGivingAmount, cex = 1.5, las = 1, pch = 16,  xlab = "Largest Gift",  ylab = "Total Giving", main = paste("b =", mod4slope, "and r =", mod4corr))
+
+abline(mod4, col = "red", lwd = 1.5)
+
+# Note to self: making a function would have been wise here!
+```
+
+------------------------------------------------------------------------
+
+## Confidence Interval for the Slope of a Population Regression Line
+
+Estimate $\pm$ Margin of Error
+
+CI for a Population Mean$$\bar{x} \pm t^*_{df}(SEM)$$ $$
+b \pm t^*_{df}(SE_b)
+$$
+
+where b is the slope, `t*` follows a *t*-distribution with `df = n - 2`
+and $SE_b$ is the standard error of the slope
+
+------------------------------------------------------------------------
+
+## Example: Donor Gifts
+
+```{r}
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     cex = 1,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving")
+
+# Plot LSRL
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+```
+
+```{r}
+summary(model)
+```
+
+### 1. Calculate a 95% confidence interval for the slope of the population regression line.
+
+$$
+b \pm t^*_{df}(SE_b)
+$$
+
+```{r}
+# t critical value
+tcrit <- qt(p = 0.975, df = 50-2)
+tcrit
+
+# Lower bound
+3.910 - tcrit*0.782
+
+# Upper bound
+3.910 + tcrit*0.782
+```
+
+### 2. Use R's `confint(model, level = ...)` to verify your answer.
+
+```{r}
+confint(model, level = 0.95)
+```
+
+### 3. Why might our interval be untrustworthy?
+
+```{r}
+plot(sampleDonors$largestGiftAmount, 
+     sampleDonors$totalGivingAmount, 
+     pch = 16,
+     las = 1,
+     xlab = "Largest Gift Amount",
+     ylab = "Total Giving")
+```
+
+### 4. We know the population regression line! (See below.) Did our interval capture the true slope?
+
+```{r}
+# Calculate population regression line
+popLine <- lm(donors$totalGivingAmount ~ donors$largestGiftAmount)
+
+# Plot all donors
+plot(donors$largestGiftAmount, 
+     donors$totalGivingAmount, 
+     cex = 1,
+     las = 1,
+     pch = 16, 
+     xlab = "Largest Gift Amount", 
+     ylab = "Total Giving",
+     main = paste("Population Slope = ", round(popLine$coefficients[2], 2)))
+
+# Plot Population regression line
+abline(popLine, 
+       lwd = 2,        # make the line wider
+       col = "black"     # color the line
+       )
+
+# Plot LSRL from sample model
+abline(model, 
+       lwd = 2,        # make the line wider
+       col = "red"     # color the line
+       )
+
+# Add a legend
+legend("bottomright",              
+       legend = c("Population LSRL", "Sample LSRL"), 
+       col = c("black", "red"),   
+       pch = c(15, 15)) 
+```
+
+We are 95% confident that the interval (2.337, 5.482) captures the
+population slope of total giving on largest gift amount for all the
+donors in this organization.
+
+The population slope was 2.64, so yes, our interval captured the
+parameter.
+
+# ---
+
+# Inference for Slope: ST
+
+We took a **sample** of donors from the **population** of all donors.
+
+```{r}
+# For reproducibility
+set.seed(1)
+
+# Randomly select 50 numbers to represent rows in dataframe
+sampleIDs <- sample(1:95412, size = 50, replace = FALSE)
+
+# Select the columns I'm interested in
+myColumns <- c("age", "incomeRating", "totalGivingAmount", "largestGiftAmount", "isHomeowner", "gender", "urbanicity", "respondedMailing")
+
+# Store the randomly selected rows on the given columns
+sampleDonors <- donors[sampleIDs, myColumns]
+sampleDonors
+```
+
+We would like to see if the sample slope is **statistically
+significant** (i.e., a \_\_ P-value).
+
+-   Assuming there's no association between the two variables, how
+    likely is it that we would observe a sample slope like this or more
+    extreme just due to sampling variability?
+
+Goal for our models: predictors with low p-values and a model with a
+high $r^2$
+
+### Perform a test of significance for the population slope at $\alpha = 0.05$.
+
+$H_0: \beta = 0$
+
+$H_a: \beta \ne 0$
+
+where $\beta$ = the slope of the population regression line of total
+giving on largest gift for all donors in this organization
+
+```{r}
+summary(model)
+```
+
+Since the p-value **is less than** the alpha level of 0.05, we **have
+convincing evidence** that the slope of the population regression line
+using largest gift to predict total giving **is not zero**.
+
+In other words, there is convincing evidence of an association between
+largest gift amount and total giving for **all** donors in this
+organization.
+
+### Calculate t-test statistic and p-value manually
+
+$$
+t = \frac{b_1-\beta}{SE_b}
+$$
+
+```{r}
+# Test statistic
+
+(3.910 -0) / .782
+# P-value
+
+2 * pt (q = 5, df = 50-2, lower.tail = FALSE)
+```
+
+For more on significance tests in regression, [see
+LSR](https://learningstatisticswithr.com/book/regression.html#regressiontests).
+
+### Final Note: Practical Significance
+
+Just because a variable is **statistically significant** does not means
+it is **practically significant!**
+
+-   Suppose the number of absences predicts grade in a course with the
+    p-value = 0.0001 \< $\alpha = 0.05$, but the effect size is 0.1%
+    lower grade in the course for each additional absence. More helpful
+    would be knowing how well does the model fit, i.e., what's $r^2$?
+
+### On your own
+
+Collect two quantitative variables on the same individuals and calculate
+a confidence interval and perform a significance test for the slope.
+
+------------------------------------------------------------------------
+
+# ---
+
+# Regression with Categorical Predictors
+
+```{r}
+sampleDonors
+```
+
+## Model with Quantitative Variable
+
+```{r}
+model_largest <- lm(totalGivingAmount ~ largestGiftAmount, data = sampleDonors)
+
+summary(model_largest)
+```
+
+### Use model to make prediction
+
+`predict(model, dataframe)`
+
+```{r}
+predict(model_largest, data.frame(largestGiftAmount = 50))
+```
+
+------------------------------------------------------------------------
+
+## Model with Categorical Predictor
+
+```{r}
+model_gender <- lm(totalGivingAmount ~ gender, data = sampleDonors)
+
+table(sampleDonors$gender)
+
+summary(model_gender)
+```
+
+$$
+\hat{y} = 139.17 + 22.08(male)
+$$
+
+0 = *not male* and 1 = *yes male*
+
+### Use model to make prediction
+
+```{r}
+predict(model_gender, data.frame(gender = "male"))
+
+139.17 + 22.08*1
+```
+
+```{r}
+predict(model_gender, data.frame(gender = c("male", "female")))
+```
+
+Notice 139.17 + 22.08(0) = 139.17, the y-intercept
+
+------------------------------------------------------------------------
+
+## Interpreting Coefficients with Categorical Predictor
+
+If a donor in this sample is male, we expect \$22.08 more than if the
+donor is a female.
+
+Note, however, that including gender is not statistically significant
+(P-value = 0.656465), which means the difference we observe between male
+and female donors may be due to chance, and not an actual inherent
+difference in giving.
+
+### A Categorical Variable with Multiple Levels
+
+```{r}
+table(sampleDonors$urbanicity) 
+
+model_urbanicity <- lm(totalGivingAmount ~ urbanicity, data = sampleDonors)
+model_urbanicity
+```
+
+$$
+\hat{y} = 199.28 - 113.63(rural) + 18.72(suburb) - 84.47(town) - 60.47(urban)
+$$
+
+a\. Predict the total giving for a donor in this sample who lives in a
+rural area.
+
+```{r}
+199.28 - 113.63*(1)
+```
+
+b\. Predict the total giving for a donor in this sample who lives in the
+suburbs.
+
+```{r}
+199.28 + 18.72*1
+```
+
+c\. Predict the total giving for a donor in this sample who lives in a
+city (wait...).
+
+```{r}
+199.28 + 0 + 0
+```
+
+City as "reference group"
+
+------------------------------------------------------------------------
+
+# ---
+
+# Multiple Regression
+
+Consider the data below from a recent year on six-year graduation rate
+(%), instructional expenditure per full-time student (in dollars), and
+median SAT score for 9 primarily undergraduate public universities and
+colleges in the western United States with enrollments between 10,000
+and 20,000 (from Peck, et al., *Stats: Learning from Data*, 2nd ed.,
+234)
+
+```{r}
+rate <- c(75, 71.5, 59.3, 56.4, 52.4, 48, 45.8, 42.7, 41.1)
+expend <- c(6960, 7274, 5361, 5374, 5070, 5226, 5927, 5600, 5073)
+SAT <- c(1242, 1114, 1014, 1070, 920, 888, 970, 937, 871)
+
+colleges <- data.frame(rate, expend, SAT)
+colleges
+```
+
+## Compare two models
+
+```{r}
+# Create two models, predicting graduation rate with different predictors
+model_expend <- lm(rate ~ expend)
+model_SAT <- lm(rate ~ SAT)
+
+# Output the summary of each model
+summary(model_expend)
+summary(model_SAT)
+```
+
+```{r}
+# Print r-squared
+summary(model_expend)$r.squared
+summary(model_SAT)$r.squared
+
+# Print the p-value for the slope of each model, given it's in the 2nd row and 4 column
+summary(model_expend)$coefficients[2, 4]
+summary(model_SAT)$coefficients[2, 4]
+```
+
+Choice:
+
+------------------------------------------------------------------------
+
+Linear Regression Model with One Predictor
+
+$$
+\widehat{y} = b_0 + b_1 x_1 
+$$
+
+Multiple Regression Model with `p` predictors:
+
+$$
+\widehat{y} = b_0 + b_1 x_1 + b_2 x_2 + \cdots + b_p x_p
+$$
+
+To assess a multiple regression model, we use **adjusted** $r^2$, which
+penalizes a model that uses *too many* *useless* predictors.
+
+In other words, **adjusted** $r^2$ will only increase if the new
+variables *improve* the model performance more than you'd expect by
+chance. For more info, [see LSR
+here](https://learningstatisticswithr.com/book/regression.html#the-adjusted-r2-value).
+
+------------------------------------------------------------------------
+
+## Perform multiple regression
+
+`lm(y ~ x1)`
+
+`lm(y ~ x1 + x2 + x3 + …)`
+
+```{r}
+# Create multiple regression
+model_mult <- lm(rate ~ expend + SAT)
+summary(model_mult)
+```
+
+```{r}
+# Print r-squared
+print(paste(c(
+  round(summary(model_expend)$r.squared, 3),
+  round(summary(model_SAT)$r.squared, 3),
+  round(summary(model_mult)$r.squared, 3))))
+
+# Compare p-values on table
+```
+
+Comments
+
+1.  R-squared increased slightly to 0.8413 (up from 0.835)
+
+2.  Adjusted R-squared decreased to 0.7884 (down from 0.8114)
+
+3.  The p-value is higher now for SAT.
+
+4.  The p-value is not significant for expenditure.
+
+------------------------------------------------------------------------
+
+## Interpreting a coefficient in multiple regression
+
+SAT =\> 0.081 =\> 0.081%
+
+-   For each additional 1-point increase on median SAT score, we predict
+    the graduation rate to increase 0.081%, holding expenditure
+    constant.
+
+Using more realistic units:
+
+-   For each additional **100-point** increase on median SAT score, we
+    predict the graduation rate to increase **8.1%**, holding
+    expenditure constant.
+
+------------------------------------------------------------------------
+
+### On your own
+
+Create your own multiple regression model (or models!) for data that
+interests you. Put it in your portfolio!
+
+# ---
+
+This material is for enrolled students' academic use only and protected
+under U.S. Copyright Laws. This content must not be shared outside the
+confines of this course, in line with Eastern University's academic
+integrity policies. Unauthorized reproduction, distribution, or
+transmission of this material, including but not limited to posting on
+third-party platforms like GitHub, is strictly prohibited and may lead
+to disciplinary action. You may not alter or remove any copyright or
+other notice from copies of any content taken from BrightSpace or
+Eastern University's website. © Copyright Notice 2024, Eastern
+University - All Rights Reserved

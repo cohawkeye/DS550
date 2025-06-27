@@ -1,0 +1,206 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+#install.packages("ggplot2")
+library(ggplot2)
+```
+
+```{r}
+txhousing <- read.csv("housing.csv")
+View(txhousing)
+```
+
+```{r}
+cl <- class(txhousing)
+nam <- names(txhousing)
+dimen <- dim(txhousing)
+Q1 <- c(cl, nam, dimen)
+
+```
+
+```{r}
+Q2 <- ls.str(txhousing)
+```
+
+```{r}
+Q3 <- summary(txhousing$median)
+```
+
+```{r}
+Q4 <- table(txhousing$year)
+Q4
+```
+
+```{r}
+unique(txhousing$city)
+table(txhousing$city)
+Q5 <-length(unique(txhousing$city))
+```
+
+```{r}
+boxplot(txhousing$sales,  horizontal = TRUE, xlab="stuff", main="Title")
+
+
+```
+
+```{r}
+boxplot(txhousing$year, txhousing$sales)
+```
+
+```{r}
+##horizontal comp boxplot
+boxplot(txhousing$sales~txhousing$year, horizontal = TRUE, xlab = ("Year"),frame=FALSE, ylab = ("Sales"))
+
+
+```
+
+```{r}
+#q8
+boxplot(txhousing$sales ~ txhousing$year,
+        horizontal = TRUE,
+        las = 1,
+        xlab = "Sales",
+        ylab = "Year",
+        main = "Sales by Year in Texas Housing",
+        frame = FALSE)   # or bty = "n"
+
+
+boxplot(txhousing$median~txhousing$year,
+        horizontal = TRUE,
+        xlab = "Median Sale Price",
+        ylab = "Year",
+        main="Housing Prices",
+        las=1,
+        color="lightgreen",
+        frame=FALSE)
+```
+
+```{r}
+boxplot(txhousing$sales ~ txhousing$year,
+        horizontal = FALSE,
+        las = 1,
+        xlab = "Sales",
+        ylab = "Year",
+        main = "Sales by Year in Texas Housing",
+        frame = FALSE)   # or bty = "n")
+```
+
+```{r}
+#q8A
+boxplot(txhousing$median ~ txhousing$year,
+        horizontal = TRUE,
+        las = 1,                            # rotate y-axis labels horizontally
+        xlab = "Median Sales Price",
+        ylab = "Year",
+        main = "Median Sales Price by Year",
+        col = "lightgreen",                # color the boxes light green
+        frame = FALSE)                     # remove the plot frame
+
+```
+
+```{r}
+#Q9a
+plot(txhousing$sales, txhousing$median,
+     pch=16,
+     las=1,
+     cex=.75)
+
+abline(lm(median~sales, data=txhousing),
+       col="red",
+       lwd=4)
+```
+
+```{r}
+plot(median ~ sales,
+     data = txhousing,
+     pch = 16,          # solid black dots
+     cex = 0.75,        # slightly smaller points
+     xlab = "Sales",
+     ylab = "Median Sales Price",
+     main = "Median Price vs. Sales")
+
+```
+
+```{r}
+Q10 <- sum(is.na(txhousing$median))
+```
+
+```{r}
+#sum(proportions(is.na(txhousing$median)))
+Q11 <- mean(is.na(txhousing$median))
+
+```
+
+```{r}
+#q12
+
+NA_meidan_index <- c(which(is.na(txhousing$median)))
+length(NA_meidan_index)
+```
+
+```{r}
+#q13
+txhousing[NA_meidan_index, c("city", "year", "sales", "median")]
+
+```
+
+```{r}
+#q14
+txhousing_clean <- txhousing[-NA_meidan_index, c("city", "year", "sales", "median", "month")]
+
+```
+
+```{r}
+##correlation
+
+cor(txhousing$median, txhousing$listings, use="complete.obs")
+cor(txhousing$median, txhousing$sales, use="complete.obs")
+cor(txhousing$median, txhousing$inventory, use="complete.obs")
+cor(txhousing$sales, txhousing$listings, use="complete.obs")
+```
+
+```{r}
+##correlation matrix
+print(cor(txhousing[, c('sales', 'year', 'inventory', 'listings', 'month', 'median')], use = "complete.obs"))
+```
+
+```{r}
+#lm(sales ~ median, data = txhousing)
+mod1 <- lm(median ~ sales, data = txhousing_clean)
+#Create a linear model predicting median sales price based on sales for the clean dataset. Store the model as mod1.
+mod1
+```
+
+```{r}
+##q16
+
+txhousing_clean[1, c("sales","median")]
+
+Q16 <- 121741.82 + 11.57 * 72 ##72 is the sales number?  
+predict(mod1, txhousing_clean[1, ])
+```
+
+```{r}
+Q17 <- summary(mod1)
+summary(lm(median~sales, data=txhousing_clean))
+```
+
+```{r}
+#q18
+
+round(cor(txhousing_clean$sales, txhousing_clean$median, use='complete.obs'), 2)
+```
+
+```{r}
+#q19
+options = 999 # turn off sci notation
+mod2 <- lm(median~sales+month, data=txhousing_clean)
+summary(mod2)
+```
+
+```{r}
+##rsquared is quite low .1199 thest two pred explain on a a small amount of the variability in mdeian sales price.  square footage, location, number of bedrooms age of home probably do a better prediction.  
+```

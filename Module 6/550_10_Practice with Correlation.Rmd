@@ -1,0 +1,127 @@
+---
+title: "550_Practice with Correlation"
+output: html_notebook
+---
+
+# Practice with Correlation
+
+The `mortgagedefault.csv` is posted on Brightspace in this module.
+
+```{r}
+# Load the CSV
+mortgage <- read.csv("mortgagedefault.csv")
+```
+
+```{r}
+# View the first few rows
+summary(mortgage)
+head(mortgage)
+```
+
+Use the code chunk below to investigate the data set. Feel free to add additional code chunks.
+
+```{r}
+
+```
+
+1.  Find the correlation between a person's annual income and the amount of their mortgage in this data set. What does this value tell you?
+
+```{r}
+income <- mortgage$annual_income
+amount<- mortgage$mortgage_amount
+cor(income, amount)
+
+```
+
+2.  Create a scatterplot with mortgage amount as the explanatory variable and annual income as the response variable. Describe the association.
+
+```{r}
+# Create scatterplot
+plot(amount,                    # variable on x-axis
+     income,                        # variable on y-axis
+     pch = 16,                    # filled-in circles
+     cex = 1,                     # larger circle size
+    # las = 3,                     # rotate numbers on y-axis
+     xlab = "Income",           # x-axis label
+     ylab = "Mortgage Amount") # y-axis label
+```
+
+
+```{r}
+# Avoid scientific notation for numbers
+options(scipen = 999)  
+
+# Plot without the x-axis drawn
+plot(amount, 
+     income, 
+     pch = 16, 
+     cex = 1, 
+     xaxt = "n",                  # suppress default x-axis
+     xlab = "Income", 
+     ylab = "Mortgage Amount")
+
+# Add a custom x-axis
+axis(1, 
+     at = seq(100000, 600000, by = 100000), 
+     labels = c("100K", "200K", "300K", "400K", "500K", "600K"))
+
+```
+
+3.  If annual income was converted from dollars to pennies, would the correlation increase, decrease or remain the same?
+
+```{r}
+#df$price_pennies <- df$price_dollars * 100
+penn_income <- income * 100
+plot(amount, 
+     penn_income, 
+     pch = 16, 
+     cex = 1, 
+     xaxt = "n",                  # suppress default x-axis
+     xlab = "Income", 
+     ylab = "Mortgage Amount")
+
+
+```
+
+4.  What is wrong with the question, "Find the correlation between a person's annual income and their default status"?
+
+```{r}
+
+```
+
+5.  Calculate the correlation between a person's age and their mortgage amount. What does this value tell you?
+
+```{r}
+
+```
+
+6.  Calculate the correlation between a person's age and their mortgage amount using the formula (with z-scores). Include comments in your code to show the step-by-step calculation.
+
+```{r}
+
+```
+
+7.  True or False: A scatterplot with a correlation of r = 0.99 would be roughly linear in shape. Explain.
+
+8.  True or False: A scatterplot with a correlation of r = 0.01 would show no pattern at all. Explain.
+
+9.  Fill-in-the-blank: If you add a point outside the trend of a scatterplot, the correlation will \_\_\_ (strengthen, weaken, or remain the same?)
+
+10. If we would like to determine if two categorical variables are associated, we should not use correlation, which requires quantitative variables. What could we do instead? Demonstrate below.
+
+```{r}
+
+```
+
+11. Why can't you calculate the correlation of X and Y for the data shown below? Fix the issue and calculate the correlation. Does the correlation imply that the association is linear?
+
+```{r}
+X <- c(1, 2, 3, 4, NA, 6)
+Y <- c(1, 4, 9, 16, NA, NA)
+
+
+```
+
+------------------------------------------------------------------------
+
+This material is for enrolled students' academic use only and protected under U.S. Copyright Laws. This content must not be shared outside the confines of this course, in line with Eastern University's academic integrity policies. Unauthorized reproduction, distribution, or transmission of this material, including but not limited to posting on third-party platforms like GitHub, is strictly prohibited and may lead to disciplinary action. You may not alter or remove any copyright or other notice from copies of any content taken from BrightSpace or Eastern University's website. © Copyright Notice 2024, Eastern University - All Rights Reserved
